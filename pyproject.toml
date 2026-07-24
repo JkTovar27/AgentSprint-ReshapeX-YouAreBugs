@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentsprint-reshapex-youarebugs"
+version = "0.1.0"
+description = "Proyecto base para un sistema agéntico con RAG"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "python-dotenv",
+  "langgraph",
+  "langchain",
+  "openai",
+  "pydantic",
+  "pytest"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
