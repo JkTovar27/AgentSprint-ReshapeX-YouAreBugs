@@ -5,7 +5,7 @@
 > #### Editar .env con API keys reales make run \```
 > #### Arquitectura [...]
 > #### Equipo
-Juan Camilo Tovar - Rol
-Abraham Parra - Rol
-Samuel Agudelo - Rol
-Juan Pablo Gallego - Rol
+> #### Juan Camilo Tovar - Rol
+> #### Abraham Parra - Rol
+> #### Samuel Agudelo - Rol
+> #### Juan Pablo Gallego - Rol
