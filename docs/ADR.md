@@ -109,3 +109,31 @@ Adoptar arquitectura **Plan-and-Execute** con **routing condicional** en LangGra
 - ⚠️ Requiere: base de datos de specs SICK bien poblada
 - ⚠️ Requiere: definición clara de campos críticos por dominio
 - ⚠️ Límite: máx 3 aclaraciones (después escala a humano)
+
+---
+
+## 5. Integración de nodos con LLM real vía OpenCode API
+- Fecha: 2026-07-25
+- Estado: Aceptado
+- Documento de referencia: `src/utils/llm.py`
+
+### Contexto
+Los nodos del orquestador (planner, clarifier, retriever, validator, evaluator, responder) usaban datos stub fijos. Para la hackathon se requiere que cada nodo ejecute llamadas reales a un LLM con los prompts definidos en `prompts.py`.
+
+### Decisión
+- Usar **OpenCode API** (compatible OpenAI) como provider LLM principal.
+- Endpoint: `https://opencode.ai/zen/v1`, modelo: `deepseek-v4-flash-free`.
+- Crear `src/utils/llm.py` con dos funciones:
+  - `call_llm()` → llamada simple, devuelve texto crudo.
+  - `call_llm_structured()` → llama y parsea JSON contra un Pydantic model, con reintentos automáticos (retry on JSON malformado).
+- Cada nodo usa `call_llm_structured()` con su propio Pydantic model de salida y reintentos (1-2 intentos).
+- La extracción de JSON del texto LLM usa `extract_json()` con regex para limpiar fences ```json y ```.
+- Las credenciales se centralizan en `src/utils/config.py` con fallback a variables de entorno.
+
+### Consecuencias
+- ✅ Los 6 nodos ahora ejecutan LLM real con reintentos automáticos ante JSON inválido.
+- ✅ Los tests estructurales (5/5) siguen pasando sin LLM (usan stubs en `__main__.py`).
+- ✅ El flujo completo End-to-End ejecuta y produce respuesta.
+- ⚠️ La calidad de la respuesta depende del modelo (`deepseek-v4-flash-free`).
+- ⚠️ Ocasionalmente el LLM devuelve JSON truncado → los reintentos lo mitigan pero no eliminan.
+- ⚠️ Los candidatos devueltos por retriever_node son generados por el LLM (no de BD real).
