@@ -112,7 +112,7 @@ Adoptar arquitectura **Plan-and-Execute** con **routing condicional** en LangGra
 
 ---
 
-## 5. Integración de nodos con LLM real vía OpenCode API
+## 5. Integración de nodos con LLM real vía OpenRouter API
 - Fecha: 2026-07-25
 - Estado: Aceptado
 - Documento de referencia: `src/utils/llm.py`
@@ -121,8 +121,8 @@ Adoptar arquitectura **Plan-and-Execute** con **routing condicional** en LangGra
 Los nodos del orquestador (planner, clarifier, retriever, validator, evaluator, responder) usaban datos stub fijos. Para la hackathon se requiere que cada nodo ejecute llamadas reales a un LLM con los prompts definidos en `prompts.py`.
 
 ### Decisión
-- Usar **OpenCode API** (compatible OpenAI) como provider LLM principal.
-- Endpoint: `https://opencode.ai/zen/v1`, modelo: `deepseek-v4-flash-free`.
+- Usar **OpenRouter API** (compatible OpenAI) como provider LLM principal.
+- Endpoint: `https://openrouter.ai/api/v1`, modelo: `deepseek-v4-flash-free`.
 - Crear `src/utils/llm.py` con dos funciones:
   - `call_llm()` → llamada simple, devuelve texto crudo.
   - `call_llm_structured()` → llama y parsea JSON contra un Pydantic model, con reintentos automáticos (retry on JSON malformado).

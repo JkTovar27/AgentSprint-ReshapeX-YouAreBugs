@@ -4,7 +4,7 @@ import re
 from typing import Optional, TypeVar, Type
 from openai import OpenAI
 from pydantic import BaseModel
-from .config import OPENCODE_API_KEY, OPENCODE_BASE_URL, OPENCODE_MODEL
+from .config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENROUTER_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,8 @@ def get_client() -> OpenAI:
     global _client
     if _client is None:
         _client = OpenAI(
-            api_key=OPENCODE_API_KEY,
-            base_url=OPENCODE_BASE_URL,
+            api_key=OPENROUTER_API_KEY,
+            base_url=OPENROUTER_BASE_URL,
         )
     return _client
 
@@ -47,7 +47,7 @@ def call_llm(
 ) -> str:
     client = get_client()
     resp = client.chat.completions.create(
-        model=model or OPENCODE_MODEL,
+        model=model or OPENROUTER_MODEL,
         temperature=temperature,
         max_tokens=max_tokens,
         messages=[
