@@ -5,9 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Streams the live progress of the Planner -> Retriever -> Validator -> Evaluator ->
- * Responder backend pipeline for a single request. Implemented today by a mock that
- * simulates realistic timing; a real implementation would open a websocket connection
- * and translate inbound frames into [PipelineEvent]s with this same contract.
+ * Responder backend pipeline for a single request. Implemented by a websocket client
+ * that translates inbound JSON frames into [PipelineEvent]s.
  */
 interface AgentPipelineRepository {
     fun streamAnalysis(description: String): Flow<PipelineEvent>
