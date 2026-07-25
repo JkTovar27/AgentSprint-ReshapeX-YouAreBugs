@@ -1,328 +1,270 @@
 package com.juanpablo0612.sickreshapex.data.remote
 
 import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import com.google.gson.annotations.SerializedName
-import com.juanpablo0612.sickreshapex.domain.model.*
-import java.util.UUID
+import com.juanpablo0612.sickreshapex.domain.model.AgentStage
+import com.juanpablo0612.sickreshapex.domain.model.Analysis
+import com.juanpablo0612.sickreshapex.domain.model.AlternativeOption
+import com.juanpablo0612.sickreshapex.domain.model.ApplicationRequirements
+import com.juanpablo0612.sickreshapex.domain.model.CandidateVerdict
+import com.juanpablo0612.sickreshapex.domain.model.PipelineEvent
+import com.juanpablo0612.sickreshapex.domain.model.PipelineResult
+import com.juanpablo0612.sickreshapex.domain.model.Reason
+import com.juanpablo0612.sickreshapex.domain.model.Recommendation
+import com.juanpablo0612.sickreshapex.domain.model.ResultConfidence
+import com.juanpablo0612.sickreshapex.domain.model.ResultStatus
+import com.juanpablo0612.sickreshapex.domain.model.SensorCandidate
+import com.juanpablo0612.sickreshapex.domain.model.SourceReference
+import com.juanpablo0612.sickreshapex.domain.model.StageDetail
 
 /**
- * Wire protocol of the agent-pipeline websocket (`/ws/analyze` on the FastAPI backend).
+ * Wire protocol of the orchestrator websocket (`/ws/orchestrator` on the FastAPI backend).
  * Every frame is one JSON text message. This file is the single source of truth for the
- * contract on the mobile side — the backend endpoint must emit frames with these shapes.
+ * contract on the mobile side.
  *
  * Client -> server, sent once right after the connection opens:
  * ```json
- * {"type": "start_analysis", "description": "<free-text application description>"}
+ * {"user_query": "<free-text request>", "session_id": "<uuid>"}
  * ```
  *
- * Server -> client, in pipeline order (`stage` is one of
- * `planner|retriever|validator|evaluator|responder`):
+ * Server -> client, one event per stage in pipeline order:
  * ```json
- * {"type": "stage_started",      "stage": "planner"}
- * {"type": "planner_completed",  "output": {"structured_requirements": [{"name": "...", "value": "..."}],
- *                                           "missing_fields": [], "extraction_confidence": 0.93, "notes": "..."}}
- * {"type": "retriever_completed","output": {"candidates": [{"product_name": "...", "sensor_family": "...",
- *                                            "specs": [{"name": "...", "value": "..."}]}],
- *                                           "sources": [{"datasheet_id": "...", "title": "...", "confidence": 0.97}],
- *                                           "notes": "..."}}
- * {"type": "validator_completed","output": {"validations": [{"product_name": "...",
- *                                            "criteria": [{"name": "...", "passed": true, "detail": "..."}],
- *                                            "overall_viability": true, "viability_reason": "..."}],
- *                                           "viable_candidates": [], "discarded_candidates": [], "notes": "..."}}
- * {"type": "evaluator_completed","output": {"confidence": 0.95, "reasoning": "...", "needs_human_review": false,
- *                                           "next_step": "respond|clarify|continue|escalate",
- *                                           "escalation_reason": null, "notes": "..."}}
- * {"type": "responder_completed","output": {"status": "success", "message": "...", "confidence": 0.95,
- *                                           "escalation": null},
- *                                "analysis": {"id": "...", "description": "...", "timestamp": 1750000000000,
- *                                             "requirements": {"tipo_objeto": "...", "distancia_mm": 500,
- *                                                              "ambiente": "...", "material_superficie": "...",
- *                                                              "montaje": "..."},
- *                                             "recommendation": {"sensor_family": "...", "executive_summary": "...",
- *                                                                "requirements": {...}, "confidence_level": 0.95,
- *                                                                "confidence_explanation": "...",
- *                                                                "reasons": [{"title": "...", "description": "..."}],
- *                                                                "sources": [{"title": "...", "url": "..."}]},
- *                                             "alternatives": [{"sensor_family": "...", "discard_reason": "..."}]}}
- * {"type": "stage_failed",       "stage": "planner", "reason": "human-readable failure"}
+ * {"etapa": "intake|clarificacion|retrieval|evaluacion|confianza",
+ *  "estado": "iniciado|completado",
+ *  "detalle": {...}}
  * ```
+ * `detalle` on completion, per stage:
+ *  - intake        -> {structured_requirements: {...}, missing_fields: [...]}
+ *  - clarificacion -> {questions: [...], iteration_count: N}
+ *  - retrieval     -> {total_candidates: N}
+ *  - evaluacion    -> {candidatos: N} plus one event per candidate with veredicto viable|descartado
+ *  - confianza     -> {score: 0-100, reasoning: "...", needs_human_review: bool}
  *
- * `responder_completed` and `stage_failed` are terminal; the client closes the socket after
- * either. Unknown frame types are ignored so the backend can add heartbeats or new events
- * without breaking older clients.
+ * The terminal event is `{"etapa": "resultado", ... "detalle": {status, shortlist, discards,
+ * reasons, confidence: {score, rationale}, sources[, questions]}}`. The same object is also
+ * served over REST at `GET /result/{session_id}` as a fallback when the socket drops.
+ *
+ * Unknown event/stage names are ignored so the backend can evolve without breaking clients.
  */
 class PipelineFrameParser(private val gson: Gson) {
 
-    fun encodeStartRequest(description: String): String =
-        gson.toJson(StartAnalysisFrame(description = description))
+    fun encodeStartRequest(userQuery: String, sessionId: String): String {
+        val frame = JsonObject().apply {
+            addProperty("user_query", userQuery)
+            addProperty("session_id", sessionId)
+        }
+        return gson.toJson(frame)
+    }
 
     /**
-     * Translates one inbound frame into a domain [PipelineEvent], or null for frame types
-     * this client does not understand. [requestDescription] backfills the persisted
-     * [Analysis] if the responder frame omits one.
+     * Translates one inbound frame into a domain [PipelineEvent], or null for frames this
+     * client does not understand.
      */
-    fun parse(text: String, requestDescription: String): PipelineEvent? {
-        val root = JsonParser.parseString(text).asJsonObject
-        return when (root.get("type")?.asString) {
-            "stage_started" -> root.stage()?.let { PipelineEvent.StageStarted(it) }
+    fun parse(text: String): PipelineEvent? {
+        val root = JsonParser.parseString(text).takeIf { it.isJsonObject }?.asJsonObject
+            ?: return null
+        val etapa = root.str("etapa") ?: return null
 
-            "planner_completed" -> PipelineEvent.PlannerCompleted(
-                root.output(PlannerOutputDto::class.java).toDomain()
-            )
+        if (etapa.equals("resultado", ignoreCase = true)) {
+            val detail = root.obj("detalle") ?: root
+            return PipelineEvent.FinalResult(parseResult(detail), analysis = null)
+        }
 
-            "retriever_completed" -> PipelineEvent.RetrieverCompleted(
-                root.output(RetrieverOutputDto::class.java).toDomain()
-            )
-
-            "validator_completed" -> PipelineEvent.ValidatorCompleted(
-                root.output(ValidatorOutputDto::class.java).toDomain()
-            )
-
-            "evaluator_completed" -> PipelineEvent.EvaluatorCompleted(
-                root.output(EvaluatorOutputDto::class.java).toDomain()
-            )
-
-            "responder_completed" -> PipelineEvent.ResponderCompleted(
-                output = root.output(ResponderOutputDto::class.java).toDomain(),
-                analysis = gson.fromJson(root.get("analysis"), AnalysisDto::class.java)
-                    ?.toDomain() ?: fallbackAnalysis(requestDescription)
-            )
-
-            "stage_failed" -> PipelineEvent.StageFailed(
-                stage = root.stage() ?: AgentStage.PLANNER,
-                reason = root.get("reason")?.asString ?: "Unknown pipeline failure"
-            )
-
+        val stage = stageFor(etapa) ?: return null
+        return when (root.str("estado")) {
+            "iniciado" -> PipelineEvent.StageStarted(stage)
+            "completado" -> PipelineEvent.StageCompleted(stage, parseDetail(stage, root.obj("detalle")))
             else -> null
         }
     }
 
-    private fun <T> JsonObject.output(dtoClass: Class<T>): T =
-        gson.fromJson(get("output"), dtoClass)
+    /** Parses the `resultado` object — the same shape the REST fallback returns. */
+    fun parseResult(json: JsonObject): PipelineResult {
+        val status = when (json.str("status")?.lowercase()) {
+            "needs_clarification" -> ResultStatus.NEEDS_CLARIFICATION
+            else -> ResultStatus.RECOMMENDED
+        }
+        return PipelineResult(
+            status = status,
+            shortlist = json.arr("shortlist").toCandidates(),
+            discards = json.arr("discards").toCandidates(),
+            reasons = json.obj("reasons")?.entrySet()
+                ?.associate { (key, value) -> key to value.asDisplayString() }
+                .orEmpty(),
+            confidence = json.obj("confidence")?.let {
+                ResultConfidence(
+                    score = it.int("score") ?: 0,
+                    rationale = it.str("rationale").orEmpty()
+                )
+            },
+            sources = json.arr("sources").toDisplayStrings(),
+            questions = json.arr("questions").toDisplayStrings()
+        )
+    }
 
-    private fun JsonObject.stage(): AgentStage? =
-        AgentStage.entries.firstOrNull { it.name.equals(get("stage")?.asString, ignoreCase = true) }
+    private fun stageFor(etapa: String): AgentStage? = when (etapa.lowercase()) {
+        "intake" -> AgentStage.INTAKE
+        "clarificacion" -> AgentStage.CLARIFICATION
+        "retrieval" -> AgentStage.RETRIEVAL
+        "evaluacion" -> AgentStage.EVALUATION
+        "confianza" -> AgentStage.CONFIDENCE
+        else -> null
+    }
 
-    /** The responder frame carried no analysis payload — keep the run navigable anyway. */
-    private fun fallbackAnalysis(description: String) = Analysis(
-        id = UUID.randomUUID().toString(),
-        description = description,
-        timestamp = System.currentTimeMillis(),
-        requirements = null,
-        recommendation = null,
-        alternatives = emptyList()
-    )
-}
-
-private data class StartAnalysisFrame(
-    val type: String = "start_analysis",
-    val description: String
-)
-
-/* DTO fields are nullable because Gson bypasses Kotlin null checks on malformed frames;
-   mapping applies safe defaults instead of throwing deep inside the stream. */
-
-private data class NamedValueDto(
-    val name: String?,
-    val value: String?
-)
-
-private fun List<NamedValueDto>?.toPairs(): List<Pair<String, String>> =
-    orEmpty().map { (it.name ?: "") to (it.value ?: "") }
-
-private data class PlannerOutputDto(
-    @SerializedName("structured_requirements") val structuredRequirements: List<NamedValueDto>?,
-    @SerializedName("missing_fields") val missingFields: List<String>?,
-    @SerializedName("extraction_confidence") val extractionConfidence: Float?,
-    val notes: String?
-) {
-    fun toDomain() = PlannerOutput(
-        structuredRequirements = structuredRequirements.toPairs(),
-        missingFields = missingFields.orEmpty(),
-        extractionConfidence = extractionConfidence ?: 0f,
-        plannerNotes = notes.orEmpty()
-    )
-}
-
-private data class RetrievedCandidateDto(
-    @SerializedName("product_name") val productName: String?,
-    @SerializedName("sensor_family") val sensorFamily: String?,
-    val specs: List<NamedValueDto>?
-)
-
-private data class DatasheetSourceDto(
-    @SerializedName("datasheet_id") val datasheetId: String?,
-    val title: String?,
-    val confidence: Float?
-)
-
-private data class RetrieverOutputDto(
-    val candidates: List<RetrievedCandidateDto>?,
-    val sources: List<DatasheetSourceDto>?,
-    val notes: String?
-) {
-    fun toDomain() = RetrieverOutput(
-        candidates = candidates.orEmpty().map {
-            RetrievedCandidate(
-                productName = it.productName.orEmpty(),
-                sensorFamily = it.sensorFamily.orEmpty(),
-                specs = it.specs.toPairs()
+    private fun parseDetail(stage: AgentStage, detail: JsonObject?): StageDetail? {
+        detail ?: return null
+        return when (stage) {
+            AgentStage.INTAKE -> StageDetail.Intake(
+                structuredRequirements = detail.obj("structured_requirements")?.entrySet()
+                    ?.map { (key, value) -> key to value.asDisplayString() }
+                    .orEmpty(),
+                missingFields = detail.arr("missing_fields").toDisplayStrings()
             )
-        },
-        sources = sources.orEmpty().map {
-            DatasheetSource(
-                datasheetId = it.datasheetId.orEmpty(),
-                title = it.title.orEmpty(),
-                confidence = it.confidence ?: 0f
+
+            AgentStage.CLARIFICATION -> StageDetail.Clarification(
+                questions = detail.arr("questions").toDisplayStrings(),
+                iterationCount = detail.int("iteration_count") ?: 0
             )
-        },
-        retrievalNotes = notes.orEmpty()
-    )
-}
 
-private data class ValidationCriterionDto(
-    val name: String?,
-    val passed: Boolean?,
-    val detail: String?
-)
+            AgentStage.RETRIEVAL -> StageDetail.Retrieval(
+                totalCandidates = detail.int("total_candidates") ?: 0
+            )
 
-private data class CandidateValidationDto(
-    @SerializedName("product_name") val productName: String?,
-    val criteria: List<ValidationCriterionDto>?,
-    @SerializedName("overall_viability") val overallViability: Boolean?,
-    @SerializedName("viability_reason") val viabilityReason: String?
-)
-
-private data class ValidatorOutputDto(
-    val validations: List<CandidateValidationDto>?,
-    @SerializedName("viable_candidates") val viableCandidates: List<String>?,
-    @SerializedName("discarded_candidates") val discardedCandidates: List<String>?,
-    val notes: String?
-) {
-    fun toDomain() = ValidatorOutput(
-        validations = validations.orEmpty().map { validation ->
-            CandidateValidation(
-                productName = validation.productName.orEmpty(),
-                criteria = validation.criteria.orEmpty().map {
-                    ValidationCriterion(
-                        name = it.name.orEmpty(),
-                        passed = it.passed ?: false,
-                        detail = it.detail.orEmpty()
+            AgentStage.EVALUATION -> StageDetail.Evaluation(
+                candidateCount = detail.int("candidatos"),
+                verdict = detail.str("veredicto")?.let { veredicto ->
+                    CandidateVerdict(
+                        candidate = detail.firstStringBesides("veredicto").orEmpty(),
+                        isViable = veredicto.equals("viable", ignoreCase = true)
                     )
-                },
-                overallViability = validation.overallViability ?: false,
-                viabilityReason = validation.viabilityReason.orEmpty()
+                }
             )
-        },
-        viableCandidates = viableCandidates.orEmpty(),
-        discardedCandidates = discardedCandidates.orEmpty(),
-        validatorNotes = notes.orEmpty()
-    )
+
+            AgentStage.CONFIDENCE -> StageDetail.Confidence(
+                score = detail.int("score") ?: 0,
+                reasoning = detail.str("reasoning").orEmpty(),
+                needsHumanReview = detail.bool("needs_human_review") ?: false
+            )
+        }
+    }
 }
 
-private data class EvaluatorOutputDto(
-    val confidence: Float?,
-    val reasoning: String?,
-    @SerializedName("needs_human_review") val needsHumanReview: Boolean?,
-    @SerializedName("next_step") val nextStep: String?,
-    @SerializedName("escalation_reason") val escalationReason: String?,
-    val notes: String?
-) {
-    fun toDomain() = EvaluatorOutput(
-        confidence = confidence ?: 0f,
-        reasoning = reasoning.orEmpty(),
-        needsHumanReview = needsHumanReview ?: false,
-        nextStep = NextStep.entries.firstOrNull { it.name.equals(nextStep, ignoreCase = true) }
-            ?: NextStep.CONTINUE,
-        escalationReason = escalationReason,
-        evaluatorNotes = notes.orEmpty()
-    )
-}
+/**
+ * Projects a finished [PipelineResult] onto the app's [Analysis] model so the existing
+ * results/history screens can render it. Only contract fields are used: the top shortlist
+ * entry becomes the recommendation, discards become alternatives (with their `reasons`
+ * entry as discard reason), and `confidence.rationale` doubles as the summary text.
+ */
+fun PipelineResult.toAnalysis(
+    userQuery: String,
+    sessionId: String,
+    intake: StageDetail.Intake?
+): Analysis {
+    val requirements = intake?.let { detail ->
+        val byKey = detail.structuredRequirements.toMap()
+        ApplicationRequirements(
+            tipo_objeto = byKey["tipo_objeto"].orEmpty(),
+            distancia_mm = byKey["distancia_mm"]?.toFloatOrNull()?.toInt() ?: 0,
+            ambiente = byKey["ambiente"].orEmpty(),
+            material_superficie = byKey["material_superficie"].orEmpty(),
+            montaje = byKey["montaje"].orEmpty()
+        )
+    }
 
-private data class ResponderOutputDto(
-    val status: String?,
-    val message: String?,
-    val confidence: Float?,
-    val escalation: String?
-) {
-    fun toDomain() = ResponderOutput(
-        status = status.orEmpty(),
-        message = message.orEmpty(),
-        confidence = confidence ?: 0f,
-        escalation = escalation
-    )
-}
-
-private data class RequirementsDto(
-    @SerializedName("tipo_objeto") val tipoObjeto: String?,
-    @SerializedName("distancia_mm") val distanciaMm: Int?,
-    val ambiente: String?,
-    @SerializedName("material_superficie") val materialSuperficie: String?,
-    val montaje: String?
-) {
-    fun toDomain() = ApplicationRequirements(
-        tipo_objeto = tipoObjeto.orEmpty(),
-        distancia_mm = distanciaMm ?: 0,
-        ambiente = ambiente.orEmpty(),
-        material_superficie = materialSuperficie.orEmpty(),
-        montaje = montaje.orEmpty()
-    )
-}
-
-private data class ReasonDto(val title: String?, val description: String?)
-
-private data class SourceReferenceDto(val title: String?, val url: String?)
-
-private data class RecommendationDto(
-    @SerializedName("sensor_family") val sensorFamily: String?,
-    @SerializedName("executive_summary") val executiveSummary: String?,
-    val requirements: RequirementsDto?,
-    @SerializedName("confidence_level") val confidenceLevel: Float?,
-    @SerializedName("confidence_explanation") val confidenceExplanation: String?,
-    val reasons: List<ReasonDto>?,
-    val sources: List<SourceReferenceDto>?
-) {
-    fun toDomain(fallbackRequirements: ApplicationRequirements?) = Recommendation(
-        sensorFamily = sensorFamily.orEmpty(),
-        executiveSummary = executiveSummary.orEmpty(),
-        requirements = (requirements?.toDomain() ?: fallbackRequirements)
-            ?: ApplicationRequirements("", 0, "", "", ""),
-        confidenceLevel = confidenceLevel ?: 0f,
-        confidenceExplanation = confidenceExplanation.orEmpty(),
-        reasons = reasons.orEmpty().map { Reason(it.title.orEmpty(), it.description.orEmpty()) },
-        sources = sources.orEmpty().map { SourceReference(it.title.orEmpty(), it.url.orEmpty()) }
-    )
-}
-
-private data class AlternativeOptionDto(
-    @SerializedName("sensor_family") val sensorFamily: String?,
-    @SerializedName("discard_reason") val discardReason: String?
-)
-
-private data class AnalysisDto(
-    val id: String?,
-    val description: String?,
-    val timestamp: Long?,
-    val requirements: RequirementsDto?,
-    val recommendation: RecommendationDto?,
-    val alternatives: List<AlternativeOptionDto>?
-) {
-    fun toDomain(): Analysis {
-        val domainRequirements = requirements?.toDomain()
-        return Analysis(
-            id = id ?: UUID.randomUUID().toString(),
-            description = description.orEmpty(),
-            timestamp = timestamp ?: System.currentTimeMillis(),
-            requirements = domainRequirements,
-            recommendation = recommendation?.toDomain(domainRequirements),
-            alternatives = alternatives.orEmpty().map {
-                AlternativeOption(
-                    sensorFamily = it.sensorFamily.orEmpty(),
-                    discardReason = it.discardReason.orEmpty()
+    val discardNames = discards.map { it.name }.toSet()
+    val recommendation = shortlist.firstOrNull()?.let { top ->
+        Recommendation(
+            sensorFamily = top.name,
+            executiveSummary = confidence?.rationale.orEmpty(),
+            requirements = requirements ?: ApplicationRequirements("", 0, "", "", ""),
+            confidenceLevel = (confidence?.score ?: 0) / 100f,
+            confidenceExplanation = confidence?.rationale.orEmpty(),
+            reasons = reasons
+                .filterKeys { it !in discardNames }
+                .map { (title, description) -> Reason(title, description) },
+            sources = sources.map { source ->
+                SourceReference(
+                    title = source,
+                    url = if (source.startsWith("http")) source else ""
                 )
             }
         )
     }
+
+    return Analysis(
+        id = sessionId,
+        description = userQuery,
+        timestamp = System.currentTimeMillis(),
+        requirements = requirements,
+        recommendation = recommendation,
+        alternatives = discards.map {
+            AlternativeOption(
+                sensorFamily = it.name,
+                discardReason = reasons[it.name].orEmpty()
+            )
+        }
+    )
 }
+
+/* Lenient JSON accessors: the stream must survive missing/renamed/mistyped fields, so every
+   read is null-safe instead of throwing deep inside the websocket listener. */
+
+private fun JsonObject.str(key: String): String? =
+    get(key)?.takeIf { it.isJsonPrimitive }?.asString
+
+private fun JsonObject.int(key: String): Int? =
+    get(key)?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isNumber }?.asFloat?.toInt()
+
+private fun JsonObject.bool(key: String): Boolean? =
+    get(key)?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isBoolean }?.asBoolean
+
+private fun JsonObject.obj(key: String): JsonObject? =
+    get(key)?.takeIf { it.isJsonObject }?.asJsonObject
+
+private fun JsonObject.arr(key: String): JsonArray? =
+    get(key)?.takeIf { it.isJsonArray }?.asJsonArray
+
+/** First string-valued field other than [excluded] — used to find a candidate's name. */
+private fun JsonObject.firstStringBesides(excluded: String): String? =
+    entrySet().firstOrNull { (key, value) ->
+        key != excluded && value.isJsonPrimitive && value.asJsonPrimitive.isString
+    }?.value?.asString
+
+/** Human-readable rendering of an arbitrary JSON value (primitives stay bare). */
+private fun JsonElement.asDisplayString(): String = when {
+    isJsonPrimitive -> asJsonPrimitive.asString
+    else -> toString()
+}
+
+private fun JsonArray?.toDisplayStrings(): List<String> =
+    this?.map { element ->
+        if (element.isJsonObject) {
+            val obj = element.asJsonObject
+            obj.str("question") ?: obj.str("text") ?: obj.str("title") ?: element.toString()
+        } else {
+            element.asDisplayString()
+        }
+    }.orEmpty()
+
+private val CANDIDATE_NAME_KEYS =
+    listOf("name", "product_name", "sensor", "sensor_family", "model", "modelo", "nombre", "id")
+
+/** Shortlist/discard entries may be plain strings or objects; keep every field we get. */
+private fun JsonArray?.toCandidates(): List<SensorCandidate> =
+    this?.map { element ->
+        if (element.isJsonObject) {
+            val obj = element.asJsonObject
+            val nameKey = CANDIDATE_NAME_KEYS.firstOrNull { obj.str(it) != null }
+            SensorCandidate(
+                name = nameKey?.let { obj.str(it) } ?: element.toString(),
+                attributes = obj.entrySet()
+                    .filter { (key, _) -> key != nameKey }
+                    .map { (key, value) -> key to value.asDisplayString() }
+            )
+        } else {
+            SensorCandidate(name = element.asDisplayString(), attributes = emptyList())
+        }
+    }.orEmpty()

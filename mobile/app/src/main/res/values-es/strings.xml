@@ -55,18 +55,17 @@
     <string name="processing_live_step">"EN VIVO  ·  Paso %1$d de 5"</string>
     <string name="processing_pipeline_stopped">Pipeline detenido</string>
     <string name="processing_completed_ratio">%1$d/5</string>
-    <string name="processing_stage_failed">%1$s falló</string>
     <string name="processing_pipeline_failed">El pipeline falló</string>
-    <string name="agent_planner">Planificador</string>
-    <string name="agent_retriever">Recuperador</string>
-    <string name="agent_validator">Validador</string>
-    <string name="agent_evaluator">Evaluador</string>
-    <string name="agent_responder">Respondedor</string>
-    <string name="agent_planner_description">Extrayendo requisitos estructurados de tu descripción</string>
-    <string name="agent_retriever_description">Buscando en la base de conocimiento de sensores SICK</string>
-    <string name="agent_validator_description">Verificando los candidatos contra cada requisito</string>
-    <string name="agent_evaluator_description">Calculando la confianza del mejor candidato</string>
-    <string name="agent_responder_description">Preparando tu recomendación</string>
+    <string name="agent_intake">Recepción</string>
+    <string name="agent_clarification">Aclaración</string>
+    <string name="agent_retrieval">Búsqueda</string>
+    <string name="agent_evaluation">Evaluación</string>
+    <string name="agent_confidence">Confianza</string>
+    <string name="agent_intake_description">Extrayendo requisitos estructurados de tu solicitud</string>
+    <string name="agent_clarification_description">Comprobando si hace falta más información</string>
+    <string name="agent_retrieval_description">Buscando candidatos en el catálogo de sensores SICK</string>
+    <string name="agent_evaluation_description">Juzgando cada candidato: viable o descartado</string>
+    <string name="agent_confidence_description">Calculando la confianza del resultado final</string>
     <string name="stage_done">Listo</string>
     <string name="stage_failed">Falló</string>
     <string name="processing_requirements_extracted">Requisitos extraídos</string>
@@ -74,9 +73,9 @@
         <item quantity="one">%1$d candidato encontrado</item>
         <item quantity="other">%1$d candidatos encontrados</item>
     </plurals>
-    <plurals name="sources_count">
-        <item quantity="one">%1$d fuente</item>
-        <item quantity="other">%1$d fuentes</item>
+    <plurals name="candidates_evaluated">
+        <item quantity="one">%1$d candidato evaluado</item>
+        <item quantity="other">%1$d candidatos evaluados</item>
     </plurals>
     <plurals name="viable_count">
         <item quantity="one">%1$d viable</item>
@@ -86,11 +85,19 @@
         <item quantity="one">%1$d descartado</item>
         <item quantity="other">%1$d descartados</item>
     </plurals>
-    <string name="decision_respond">Responder</string>
-    <string name="decision_clarify">Aclarar</string>
-    <string name="decision_continue">Continuar</string>
-    <string name="decision_escalate">Escalar</string>
-    <string name="processing_next_action">Siguiente: %1$s</string>
+    <string name="processing_missing_fields">Campos faltantes</string>
+    <string name="processing_needs_review">Requiere revisión humana</string>
+    <string name="bullet_item">•  %1$s</string>
+    <string name="clarification_needed_pill">Falta información</string>
+    <string name="clarification_needed_title">Necesitamos un poco más de información</string>
+    <string name="clarification_none_needed">No se necesitan aclaraciones</string>
+    <plurals name="clarification_questions_count">
+        <item quantity="one">%1$d pregunta para ti</item>
+        <item quantity="other">%1$d preguntas para ti</item>
+    </plurals>
+    <string name="clarification_iteration">Iteración %1$d</string>
+    <string name="clarification_answer_hint">Agrega los detalles que faltan…</string>
+    <string name="clarification_send">Enviar y reanalizar</string>
     <string name="processing_recommendation_ready">Recomendación lista</string>
     <string name="processing_analysis_complete">Análisis completado.</string>
     <string name="error_unexpected_analysis">Error inesperado al analizar la aplicación.</string>

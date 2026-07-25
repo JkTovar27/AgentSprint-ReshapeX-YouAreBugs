@@ -35,11 +35,11 @@ import com.juanpablo0612.sickreshapex.ui.theme.ThemePreference
 import org.koin.androidx.compose.koinViewModel
 
 private val PIPELINE_STAGES = listOf(
-    R.string.agent_planner,
-    R.string.agent_retriever,
-    R.string.agent_validator,
-    R.string.agent_evaluator,
-    R.string.agent_responder
+    R.string.agent_intake,
+    R.string.agent_clarification,
+    R.string.agent_retrieval,
+    R.string.agent_evaluation,
+    R.string.agent_confidence
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
