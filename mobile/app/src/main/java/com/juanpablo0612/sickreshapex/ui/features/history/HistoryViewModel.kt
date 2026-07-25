@@ -2,14 +2,20 @@ package com.juanpablo0612.sickreshapex.ui.features.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.juanpablo0612.sickreshapex.domain.repository.AnalysisRepository
+import com.juanpablo0612.sickreshapex.domain.usecase.GetFavoritesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.GetRecentAnalysesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.ToggleFavoriteUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HistoryViewModel(private val repository: AnalysisRepository) : ViewModel() {
+class HistoryViewModel(
+    private val getRecentAnalyses: GetRecentAnalysesUseCase,
+    private val getFavorites: GetFavoritesUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
+) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryState())
     val uiState: StateFlow<HistoryState> = _uiState.asStateFlow()
 
@@ -21,8 +27,8 @@ class HistoryViewModel(private val repository: AnalysisRepository) : ViewModel()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val analyses = repository.getRecentAnalyses()
-                val favorites = repository.getFavorites()
+                val analyses = getRecentAnalyses()
+                val favorites = getFavorites()
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -40,7 +46,7 @@ class HistoryViewModel(private val repository: AnalysisRepository) : ViewModel()
     fun toggleFavorite(id: String) {
         viewModelScope.launch {
             try {
-                val isFavoriteNow = repository.toggleFavorite(id)
+                val isFavoriteNow = toggleFavoriteUseCase(id)
                 _uiState.update { state ->
                     state.copy(
                         favoriteIds = if (isFavoriteNow) state.favoriteIds + id else state.favoriteIds - id

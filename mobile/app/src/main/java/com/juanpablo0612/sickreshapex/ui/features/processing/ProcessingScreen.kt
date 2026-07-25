@@ -13,12 +13,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,10 +46,12 @@ import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Centerpiece "live pipeline" screen: visualizes the Planner -> Retriever -> Validator ->
- * Evaluator -> Responder backend agents running in real time. Each stage lights up as it
- * starts, reveals a compact summary card as it completes, and the whole thing resolves into
- * a short celebratory beat before handing off to the full recommendation screen.
+ * Centerpiece "live pipeline" screen: visualizes the orchestrator stages (intake ->
+ * clarificacion -> retrieval -> evaluacion -> confianza) streaming in real time. Each stage
+ * lights up as it starts and reveals its `detalle` as it completes. The terminal `resultado`
+ * either resolves into a short celebratory beat that hands off to the recommendation screen,
+ * or — when the backend needs clarification — surfaces its questions with an inline answer
+ * box that re-runs the pipeline in the same session.
  */
 @Composable
 fun ProcessingScreen(
@@ -114,12 +117,27 @@ fun ProcessingScreen(
 
                     PipelineStepper(state = uiState)
 
+                    if (uiState.needsClarification) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ClarificationPanel(
+                            questions = uiState.clarificationQuestions,
+                            onSend = { answer -> viewModel.sendClarification(answer) }
+                        )
+                    }
+
                     if (uiState.hasFailed) {
                         Spacer(modifier = Modifier.height(8.dp))
                         PipelineErrorCard(
-                            failedStage = uiState.failedStage,
                             reason = uiState.error
                                 ?: uiState.errorRes?.let { stringResource(it) }.orEmpty(),
+                            onBack = onBack
+                        )
+                    }
+
+                    if (uiState.finishedWithoutData) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        PipelineErrorCard(
+                            reason = stringResource(R.string.processing_no_results_reason),
                             onBack = onBack
                         )
                     }
@@ -139,7 +157,7 @@ fun ProcessingScreen(
                             .background(MaterialTheme.colorScheme.background.copy(alpha = 0.78f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        CompletionBeatCard(responderOutput = uiState.responderOutput)
+                        CompletionBeatCard(result = uiState.result)
                     }
                 }
             }
@@ -199,21 +217,35 @@ private fun LiveStatusRow(state: ProcessingState, modifier: Modifier = Modifier)
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (!state.hasFailed) {
-            PulsingDot(color = MaterialTheme.extendedColors.scanCyan)
-            Spacer(modifier = Modifier.width(8.dp))
-            val step = (state.completedCount + 1).coerceAtMost(5)
-            Text(
-                text = stringResource(R.string.processing_live_step, step),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.extendedColors.scanCyan
-            )
-        } else {
-            StatusPill(
+        when {
+            state.hasFailed -> StatusPill(
                 text = stringResource(R.string.processing_pipeline_stopped),
                 tone = PillTone.ERROR,
                 icon = Icons.Filled.Warning
             )
+
+            state.needsClarification -> StatusPill(
+                text = stringResource(R.string.clarification_needed_pill),
+                tone = PillTone.WARNING,
+                icon = Icons.AutoMirrored.Filled.HelpOutline
+            )
+
+            state.finishedWithoutData -> StatusPill(
+                text = stringResource(R.string.processing_no_results_pill),
+                tone = PillTone.WARNING,
+                icon = Icons.Filled.Warning
+            )
+
+            else -> {
+                PulsingDot(color = MaterialTheme.extendedColors.scanCyan)
+                Spacer(modifier = Modifier.width(8.dp))
+                val step = (state.completedCount + 1).coerceAtMost(5)
+                Text(
+                    text = stringResource(R.string.processing_live_step, step),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.extendedColors.scanCyan
+                )
+            }
         }
         Spacer(modifier = Modifier.weight(1f))
         Text(
@@ -252,7 +284,6 @@ private fun OverallProgressTrack(fraction: Float, modifier: Modifier = Modifier)
 
 @Composable
 private fun PipelineErrorCard(
-    failedStage: AgentStage?,
     reason: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -267,8 +298,7 @@ private fun PipelineErrorCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = failedStage?.let { stringResource(R.string.processing_stage_failed, stageLabel(it)) }
-                        ?: stringResource(R.string.processing_pipeline_failed),
+                    text = stringResource(R.string.processing_pipeline_failed),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -292,41 +322,41 @@ private fun PipelineErrorCard(
 // --- Pipeline stepper -------------------------------------------------------------------
 
 private val PIPELINE_STAGES = listOf(
-    AgentStage.PLANNER,
-    AgentStage.RETRIEVER,
-    AgentStage.VALIDATOR,
-    AgentStage.EVALUATOR,
-    AgentStage.RESPONDER
+    AgentStage.INTAKE,
+    AgentStage.CLARIFICATION,
+    AgentStage.RETRIEVAL,
+    AgentStage.EVALUATION,
+    AgentStage.CONFIDENCE
 )
 
 @Composable
 private fun stageLabel(stage: AgentStage): String = stringResource(
     when (stage) {
-        AgentStage.PLANNER -> R.string.agent_planner
-        AgentStage.RETRIEVER -> R.string.agent_retriever
-        AgentStage.VALIDATOR -> R.string.agent_validator
-        AgentStage.EVALUATOR -> R.string.agent_evaluator
-        AgentStage.RESPONDER -> R.string.agent_responder
+        AgentStage.INTAKE -> R.string.agent_intake
+        AgentStage.CLARIFICATION -> R.string.agent_clarification
+        AgentStage.RETRIEVAL -> R.string.agent_retrieval
+        AgentStage.EVALUATION -> R.string.agent_evaluation
+        AgentStage.CONFIDENCE -> R.string.agent_confidence
     }
 )
 
 @Composable
 private fun stageDescription(stage: AgentStage): String = stringResource(
     when (stage) {
-        AgentStage.PLANNER -> R.string.agent_planner_description
-        AgentStage.RETRIEVER -> R.string.agent_retriever_description
-        AgentStage.VALIDATOR -> R.string.agent_validator_description
-        AgentStage.EVALUATOR -> R.string.agent_evaluator_description
-        AgentStage.RESPONDER -> R.string.agent_responder_description
+        AgentStage.INTAKE -> R.string.agent_intake_description
+        AgentStage.CLARIFICATION -> R.string.agent_clarification_description
+        AgentStage.RETRIEVAL -> R.string.agent_retrieval_description
+        AgentStage.EVALUATION -> R.string.agent_evaluation_description
+        AgentStage.CONFIDENCE -> R.string.agent_confidence_description
     }
 )
 
 private fun stageIcon(stage: AgentStage): ImageVector = when (stage) {
-    AgentStage.PLANNER -> Icons.Filled.Psychology
-    AgentStage.RETRIEVER -> Icons.Filled.TravelExplore
-    AgentStage.VALIDATOR -> Icons.AutoMirrored.Filled.FactCheck
-    AgentStage.EVALUATOR -> Icons.Filled.Insights
-    AgentStage.RESPONDER -> Icons.AutoMirrored.Filled.Send
+    AgentStage.INTAKE -> Icons.Filled.Psychology
+    AgentStage.CLARIFICATION -> Icons.AutoMirrored.Filled.HelpOutline
+    AgentStage.RETRIEVAL -> Icons.Filled.TravelExplore
+    AgentStage.EVALUATION -> Icons.Filled.Insights
+    AgentStage.CONFIDENCE -> Icons.Filled.Verified
 }
 
 @Composable
@@ -507,15 +537,19 @@ private fun StageConnector(filled: Boolean, modifier: Modifier = Modifier) {
 @Composable
 private fun StageDetailCard(stage: AgentStage, state: ProcessingState, modifier: Modifier = Modifier) {
     when (stage) {
-        AgentStage.PLANNER -> state.plannerOutput?.let { PlannerStageCard(it, modifier) }
-        AgentStage.RETRIEVER -> state.retrieverOutput?.let { RetrieverStageCard(it, modifier) }
-        AgentStage.VALIDATOR -> state.validatorOutput?.let { ValidatorStageCard(it, modifier) }
-        AgentStage.EVALUATOR -> state.evaluatorOutput?.let { EvaluatorStageCard(it, modifier) }
-        AgentStage.RESPONDER -> state.responderOutput?.let { ResponderStageCard(it, modifier) }
+        AgentStage.INTAKE -> state.intake?.let { IntakeStageCard(it, modifier) }
+        AgentStage.CLARIFICATION -> state.clarification?.let { ClarificationStageCard(it, modifier) }
+        AgentStage.RETRIEVAL -> state.retrieval?.let { RetrievalStageCard(it, modifier) }
+        AgentStage.EVALUATION -> EvaluationStageCard(
+            candidateCount = state.evaluationCandidateCount,
+            verdicts = state.verdicts,
+            modifier = modifier
+        )
+        AgentStage.CONFIDENCE -> state.confidence?.let { ConfidenceStageCard(it, modifier) }
     }
 }
 
-// --- Per-stage compact summary cards ----------------------------------------------------
+// --- Per-stage `detalle` summary cards --------------------------------------------------
 
 @Composable
 private fun ChipsRow(items: List<String>, tone: PillTone, modifier: Modifier = Modifier) {
@@ -532,156 +566,75 @@ private fun ChipsRow(items: List<String>, tone: PillTone, modifier: Modifier = M
 }
 
 @Composable
-private fun PlannerStageCard(output: PlannerOutput, modifier: Modifier = Modifier) {
+private fun IntakeStageCard(detail: StageDetail.Intake, modifier: Modifier = Modifier) {
     SickCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.processing_requirements_extracted),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = stringResource(R.string.percent_format, (output.extractionConfidence * 100).toInt()),
-                    style = ReadoutType.small,
-                    color = MaterialTheme.extendedColors.scanCyan
+            Text(
+                text = stringResource(R.string.processing_requirements_extracted),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (detail.structuredRequirements.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                ChipsRow(
+                    items = detail.structuredRequirements.map { (key, value) ->
+                        stringResource(R.string.key_value_format, key, value)
+                    },
+                    tone = PillTone.INFO
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            ChipsRow(
-                items = output.structuredRequirements.map { (key, value) ->
-                    stringResource(R.string.key_value_format, key, value)
-                },
-                tone = PillTone.INFO
-            )
-            if (output.plannerNotes.isNotBlank()) {
+            if (detail.missingFields.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = output.plannerNotes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = stringResource(R.string.processing_missing_fields),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.extendedColors.warning
                 )
+                Spacer(modifier = Modifier.height(6.dp))
+                ChipsRow(items = detail.missingFields, tone = PillTone.WARNING)
             }
         }
     }
 }
 
 @Composable
-private fun RetrieverStageCard(output: RetrieverOutput, modifier: Modifier = Modifier) {
+private fun ClarificationStageCard(detail: StageDetail.Clarification, modifier: Modifier = Modifier) {
     SickCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = pluralStringResource(
-                        R.plurals.candidates_found,
-                        output.candidates.size,
-                        output.candidates.size
-                    ),
+                    text = if (detail.questions.isEmpty()) {
+                        stringResource(R.string.clarification_none_needed)
+                    } else {
+                        pluralStringResource(
+                            R.plurals.clarification_questions_count,
+                            detail.questions.size,
+                            detail.questions.size
+                        )
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
+                StatusPill(
+                    text = stringResource(R.string.clarification_iteration, detail.iterationCount),
+                    tone = PillTone.NEUTRAL
+                )
+            }
+            detail.questions.forEach { question ->
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = pluralStringResource(
-                        R.plurals.sources_count,
-                        output.sources.size,
-                        output.sources.size
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
+                    text = stringResource(R.string.bullet_item, question),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            ChipsRow(items = output.candidates.map { it.productName }, tone = PillTone.NEUTRAL)
-            if (output.retrievalNotes.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = output.retrievalNotes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun ValidatorStageCard(output: ValidatorOutput, modifier: Modifier = Modifier) {
-    SickCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusPill(
-                    text = pluralStringResource(
-                        R.plurals.viable_count,
-                        output.viableCandidates.size,
-                        output.viableCandidates.size
-                    ),
-                    tone = PillTone.SUCCESS,
-                    icon = Icons.Filled.CheckCircle
-                )
-                StatusPill(
-                    text = pluralStringResource(
-                        R.plurals.discarded_count,
-                        output.discardedCandidates.size,
-                        output.discardedCandidates.size
-                    ),
-                    tone = PillTone.ERROR,
-                    icon = Icons.Filled.Close
-                )
-            }
-            if (output.validatorNotes.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = output.validatorNotes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EvaluatorStageCard(output: EvaluatorOutput, modifier: Modifier = Modifier) {
-    SickCard(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .padding(14.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ConfidenceRing(progress = output.confidence, label = stringResource(R.string.confidence_label))
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                val (tone, label) = when (output.nextStep) {
-                    NextStep.RESPOND -> PillTone.SUCCESS to stringResource(R.string.decision_respond)
-                    NextStep.CLARIFY -> PillTone.WARNING to stringResource(R.string.decision_clarify)
-                    NextStep.CONTINUE -> PillTone.INFO to stringResource(R.string.decision_continue)
-                    NextStep.ESCALATE -> PillTone.ERROR to stringResource(R.string.decision_escalate)
-                }
-                StatusPill(text = stringResource(R.string.processing_next_action, label), tone = tone)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = output.reasoning,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ResponderStageCard(output: ResponderOutput, modifier: Modifier = Modifier) {
+private fun RetrievalStageCard(detail: StageDetail.Retrieval, modifier: Modifier = Modifier) {
     SickCard(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -690,26 +643,164 @@ private fun ResponderStageCard(output: ResponderOutput, modifier: Modifier = Mod
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Filled.CheckCircle,
+                imageVector = Icons.Filled.TravelExplore,
                 contentDescription = null,
-                tint = MaterialTheme.extendedColors.success,
-                modifier = Modifier.size(28.dp)
+                tint = MaterialTheme.extendedColors.scanCyan,
+                modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = pluralStringResource(
+                    R.plurals.candidates_found,
+                    detail.totalCandidates,
+                    detail.totalCandidates
+                ),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun EvaluationStageCard(
+    candidateCount: Int?,
+    verdicts: List<CandidateVerdict>,
+    modifier: Modifier = Modifier
+) {
+    if (candidateCount == null && verdicts.isEmpty()) return
+    SickCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            val viable = verdicts.filter { it.isViable }
+            val discarded = verdicts.filterNot { it.isViable }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (verdicts.isNotEmpty()) {
+                    StatusPill(
+                        text = pluralStringResource(R.plurals.viable_count, viable.size, viable.size),
+                        tone = PillTone.SUCCESS,
+                        icon = Icons.Filled.CheckCircle
+                    )
+                    StatusPill(
+                        text = pluralStringResource(R.plurals.discarded_count, discarded.size, discarded.size),
+                        tone = PillTone.ERROR,
+                        icon = Icons.Filled.Close
+                    )
+                } else if (candidateCount != null) {
+                    StatusPill(
+                        text = pluralStringResource(
+                            R.plurals.candidates_evaluated,
+                            candidateCount,
+                            candidateCount
+                        ),
+                        tone = PillTone.INFO,
+                        icon = Icons.Filled.Insights
+                    )
+                }
+            }
+            val named = verdicts.filter { it.candidate.isNotBlank() }
+            if (named.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    named.forEach { verdict ->
+                        StatusPill(
+                            text = verdict.candidate,
+                            tone = if (verdict.isViable) PillTone.SUCCESS else PillTone.ERROR
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfidenceStageCard(detail: StageDetail.Confidence, modifier: Modifier = Modifier) {
+    SickCard(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .padding(14.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ConfidenceRing(
+                progress = detail.score / 100f,
+                label = stringResource(R.string.confidence_label)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
+                if (detail.needsHumanReview) {
+                    StatusPill(
+                        text = stringResource(R.string.processing_needs_review),
+                        tone = PillTone.WARNING,
+                        icon = Icons.Filled.Warning
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 Text(
-                    text = output.message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
+                    text = detail.reasoning,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                StatusPill(
-                    text = stringResource(R.string.confidence_percent, (output.confidence * 100).toInt()),
-                    tone = PillTone.SUCCESS
+            }
+        }
+    }
+}
+
+// --- Clarification panel (resultado.status == needs_clarification) -----------------------
+
+@Composable
+private fun ClarificationPanel(
+    questions: List<String>,
+    onSend: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var answer by remember { mutableStateOf("") }
+    SickCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.HelpOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.extendedColors.warning
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.clarification_needed_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
+            questions.forEach { question ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.bullet_item, question),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            OutlinedTextField(
+                value = answer,
+                onValueChange = { answer = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(stringResource(R.string.clarification_answer_hint)) },
+                minLines = 2
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            PrimaryActionButton(
+                text = stringResource(R.string.clarification_send),
+                onClick = { onSend(answer) },
+                enabled = answer.isNotBlank(),
+                icon = Icons.AutoMirrored.Filled.Send,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -717,7 +808,7 @@ private fun ResponderStageCard(output: ResponderOutput, modifier: Modifier = Mod
 // --- Completion beat ---------------------------------------------------------------------
 
 @Composable
-private fun CompletionBeatCard(responderOutput: ResponderOutput?, modifier: Modifier = Modifier) {
+private fun CompletionBeatCard(result: PipelineResult?, modifier: Modifier = Modifier) {
     var appeared by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { appeared = true }
     val scale by animateFloatAsState(
@@ -767,18 +858,16 @@ private fun CompletionBeatCard(responderOutput: ResponderOutput?, modifier: Modi
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = responderOutput?.message ?: stringResource(R.string.processing_analysis_complete),
+                text = result?.confidence?.rationale?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.processing_analysis_complete),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            if (responderOutput != null) {
+            result?.confidence?.let { confidence ->
                 Spacer(modifier = Modifier.height(12.dp))
                 StatusPill(
-                    text = stringResource(
-                        R.string.confidence_percent,
-                        (responderOutput.confidence * 100).toInt()
-                    ),
+                    text = stringResource(R.string.confidence_percent, confidence.score),
                     tone = PillTone.SUCCESS
                 )
             }

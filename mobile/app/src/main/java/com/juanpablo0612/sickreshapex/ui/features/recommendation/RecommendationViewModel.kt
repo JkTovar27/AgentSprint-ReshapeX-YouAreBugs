@@ -3,7 +3,9 @@ package com.juanpablo0612.sickreshapex.ui.features.recommendation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.juanpablo0612.sickreshapex.R
-import com.juanpablo0612.sickreshapex.domain.repository.AnalysisRepository
+import com.juanpablo0612.sickreshapex.domain.usecase.GetAnalysisDetailsUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.GetFavoritesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.ToggleFavoriteUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,11 @@ import kotlinx.coroutines.launch
  * and exposes it as the payoff/results screen state. The pipeline that produces a new analysis
  * lives entirely in the Processing feature now — this screen only ever reads a finished result.
  */
-class RecommendationViewModel(private val repository: AnalysisRepository) : ViewModel() {
+class RecommendationViewModel(
+    private val getAnalysisDetails: GetAnalysisDetailsUseCase,
+    private val getFavorites: GetFavoritesUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
+) : ViewModel() {
     private val _uiState = MutableStateFlow(RecommendationState())
     val uiState: StateFlow<RecommendationState> = _uiState.asStateFlow()
 
@@ -23,8 +29,8 @@ class RecommendationViewModel(private val repository: AnalysisRepository) : View
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorRes = null) }
             try {
-                val analysis = repository.getAnalysisById(id)
-                val isFavorite = repository.getFavorites().any { favorite -> favorite.analysisId == id }
+                val analysis = getAnalysisDetails(id)
+                val isFavorite = getFavorites().any { favorite -> favorite.analysisId == id }
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -45,7 +51,7 @@ class RecommendationViewModel(private val repository: AnalysisRepository) : View
     fun toggleFavorite(analysisId: String) {
         viewModelScope.launch {
             try {
-                val isFavorite = repository.toggleFavorite(analysisId)
+                val isFavorite = toggleFavoriteUseCase(analysisId)
                 _uiState.update { it.copy(isFavorite = isFavorite) }
             } catch (_: Exception) {
                 // Favoriting is a nice-to-have; swallow failures rather than surfacing an error state.

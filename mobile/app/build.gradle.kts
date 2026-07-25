@@ -1,6 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+/*
+ * Backend endpoints live in secrets.properties (gitignored) so they never reach the repo
+ * and can be swapped per developer/demo machine. secrets.defaults.properties is the
+ * committed template with safe emulator defaults.
+ */
+val secrets = Properties().apply {
+    rootProject.file("secrets.defaults.properties").takeIf { it.exists() }
+        ?.inputStream()?.use { load(it) }
+    rootProject.file("secrets.properties").takeIf { it.exists() }
+        ?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -19,6 +33,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // http(s):// base of the SICK Select Copilot backend; ws:// URLs are derived from it.
+        buildConfigField(
+            "String",
+            "BACKEND_BASE_URL",
+            "\"${secrets.getProperty("BACKEND_BASE_URL", "http://10.0.2.2:8000")}\""
+        )
     }
 
     buildTypes {
@@ -34,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -51,6 +73,7 @@ dependencies {
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
 

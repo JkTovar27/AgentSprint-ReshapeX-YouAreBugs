@@ -62,18 +62,19 @@
     <string name="processing_live_step">"LIVE  ·  Step %1$d of 5"</string>
     <string name="processing_pipeline_stopped">Pipeline stopped</string>
     <string name="processing_completed_ratio">%1$d/5</string>
-    <string name="processing_stage_failed">%1$s failed</string>
     <string name="processing_pipeline_failed">Pipeline failed</string>
-    <string name="agent_planner">Planner</string>
-    <string name="agent_retriever">Retriever</string>
-    <string name="agent_validator">Validator</string>
-    <string name="agent_evaluator">Evaluator</string>
-    <string name="agent_responder">Responder</string>
-    <string name="agent_planner_description">Extracting structured requirements from your description</string>
-    <string name="agent_retriever_description">Searching the SICK sensor knowledge base</string>
-    <string name="agent_validator_description">Checking candidates against every requirement</string>
-    <string name="agent_evaluator_description">Scoring confidence in the leading match</string>
-    <string name="agent_responder_description">Preparing your recommendation</string>
+    <string name="processing_no_results_pill">No results</string>
+    <string name="processing_no_results_reason">The pipeline finished but returned no recommendations. The backend completed every stage without producing sensor data — check the orchestrator logs for this session.</string>
+    <string name="agent_intake">Intake</string>
+    <string name="agent_clarification">Clarification</string>
+    <string name="agent_retrieval">Retrieval</string>
+    <string name="agent_evaluation">Evaluation</string>
+    <string name="agent_confidence">Confidence</string>
+    <string name="agent_intake_description">Extracting structured requirements from your request</string>
+    <string name="agent_clarification_description">Checking whether more information is needed</string>
+    <string name="agent_retrieval_description">Searching the SICK sensor catalog for candidates</string>
+    <string name="agent_evaluation_description">Judging each candidate: viable or discarded</string>
+    <string name="agent_confidence_description">Scoring confidence in the final result</string>
     <string name="stage_done">Done</string>
     <string name="stage_failed">Failed</string>
     <string name="processing_requirements_extracted">Requirements extracted</string>
@@ -81,9 +82,9 @@
         <item quantity="one">%1$d candidate found</item>
         <item quantity="other">%1$d candidates found</item>
     </plurals>
-    <plurals name="sources_count">
-        <item quantity="one">%1$d source</item>
-        <item quantity="other">%1$d sources</item>
+    <plurals name="candidates_evaluated">
+        <item quantity="one">%1$d candidate evaluated</item>
+        <item quantity="other">%1$d candidates evaluated</item>
     </plurals>
     <plurals name="viable_count">
         <item quantity="one">%1$d viable</item>
@@ -93,11 +94,19 @@
         <item quantity="one">%1$d discarded</item>
         <item quantity="other">%1$d discarded</item>
     </plurals>
-    <string name="decision_respond">Respond</string>
-    <string name="decision_clarify">Clarify</string>
-    <string name="decision_continue">Continue</string>
-    <string name="decision_escalate">Escalate</string>
-    <string name="processing_next_action">Next: %1$s</string>
+    <string name="processing_missing_fields">Missing fields</string>
+    <string name="processing_needs_review">Needs human review</string>
+    <string name="bullet_item">•  %1$s</string>
+    <string name="clarification_needed_pill">More info needed</string>
+    <string name="clarification_needed_title">We need a bit more information</string>
+    <string name="clarification_none_needed">No clarification needed</string>
+    <plurals name="clarification_questions_count">
+        <item quantity="one">%1$d question for you</item>
+        <item quantity="other">%1$d questions for you</item>
+    </plurals>
+    <string name="clarification_iteration">Iteration %1$d</string>
+    <string name="clarification_answer_hint">Add the missing details…</string>
+    <string name="clarification_send">Send and re-run analysis</string>
     <string name="processing_recommendation_ready">Recommendation ready</string>
     <string name="processing_analysis_complete">Analysis complete.</string>
     <string name="error_unexpected_analysis">Unexpected error while analyzing the application.</string>

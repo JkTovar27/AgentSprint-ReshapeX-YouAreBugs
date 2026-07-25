@@ -2,28 +2,28 @@ package com.juanpablo0612.sickreshapex.ui.features.processing
 
 import androidx.annotation.StringRes
 import com.juanpablo0612.sickreshapex.domain.model.AgentStage
-import com.juanpablo0612.sickreshapex.domain.model.EvaluatorOutput
-import com.juanpablo0612.sickreshapex.domain.model.PlannerOutput
-import com.juanpablo0612.sickreshapex.domain.model.ResponderOutput
-import com.juanpablo0612.sickreshapex.domain.model.RetrieverOutput
+import com.juanpablo0612.sickreshapex.domain.model.CandidateVerdict
+import com.juanpablo0612.sickreshapex.domain.model.PipelineResult
+import com.juanpablo0612.sickreshapex.domain.model.ResultStatus
+import com.juanpablo0612.sickreshapex.domain.model.StageDetail
 import com.juanpablo0612.sickreshapex.domain.model.StageStatus
-import com.juanpablo0612.sickreshapex.domain.model.ValidatorOutput
 
 /**
- * Live-progress state for the 5-agent pipeline (Planner -> Retriever -> Validator ->
- * Evaluator -> Responder). One [ProcessingViewModel] instance drives one run: each
+ * Live-progress state for the orchestrator pipeline (intake -> clarificacion -> retrieval ->
+ * evaluacion -> confianza). One [ProcessingViewModel] instance drives one session: each
  * [com.juanpablo0612.sickreshapex.domain.model.PipelineEvent] folds into this state so the
- * screen can render an always-consistent snapshot instead of reacting to raw events.
+ * screen renders an always-consistent snapshot instead of reacting to raw events.
  */
 data class ProcessingState(
     val stageStatuses: Map<AgentStage, StageStatus> = AgentStage.entries.associateWith { StageStatus.PENDING },
-    val plannerOutput: PlannerOutput? = null,
-    val retrieverOutput: RetrieverOutput? = null,
-    val validatorOutput: ValidatorOutput? = null,
-    val evaluatorOutput: EvaluatorOutput? = null,
-    val responderOutput: ResponderOutput? = null,
+    val intake: StageDetail.Intake? = null,
+    val clarification: StageDetail.Clarification? = null,
+    val retrieval: StageDetail.Retrieval? = null,
+    val evaluationCandidateCount: Int? = null,
+    val verdicts: List<CandidateVerdict> = emptyList(),
+    val confidence: StageDetail.Confidence? = null,
+    val result: PipelineResult? = null,
     val analysisId: String? = null,
-    val failedStage: AgentStage? = null,
     val error: String? = null,
     @StringRes val errorRes: Int? = null
 ) {
@@ -35,4 +35,19 @@ data class ProcessingState(
 
     val hasFailed: Boolean
         get() = error != null || errorRes != null
+
+    /** The backend needs more input: show [PipelineResult.questions] and let the user re-submit. */
+    val needsClarification: Boolean
+        get() = result?.status == ResultStatus.NEEDS_CLARIFICATION
+
+    /**
+     * The pipeline delivered its terminal result but there was nothing to recommend (empty
+     * shortlist), so no Analysis was saved and there is no results screen to hand off to.
+     */
+    val finishedWithoutData: Boolean
+        get() = result != null && !needsClarification && analysisId == null
+
+    val clarificationQuestions: List<String>
+        get() = result?.questions?.takeIf { it.isNotEmpty() }
+            ?: clarification?.questions.orEmpty()
 }

@@ -32,10 +32,12 @@ import com.juanpablo0612.sickreshapex.ui.features.splash.SplashScreen
 
 @Composable
 fun NavGraph(
-    navController: NavHostController
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
+        modifier = modifier,
         startDestination = Screen.Splash.route
     ) {
         composable(Screen.Splash.route) {

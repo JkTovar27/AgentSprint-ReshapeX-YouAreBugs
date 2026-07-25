@@ -36,6 +36,7 @@ atlassian-ide-plugin.xml
 Thumbs.db
 
 # Android Secrets
+secrets.properties
 *.keystore
 !debug.keystore
 *.jks
