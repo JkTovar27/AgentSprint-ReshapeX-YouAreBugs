@@ -15,6 +15,10 @@ dependencies = [
   "langchain",
   "openai",
   "pydantic",
+  "chromadb",
+  "beautifulsoup4",
+  "PyMuPDF",
+  "playwright",
   "pytest"
 ]
 
