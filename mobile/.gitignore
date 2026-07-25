@@ -1,0 +1,54 @@
+# Built artifacts
+bin
+gen
+out
+build/
+.gradle/
+
+# Gradle
+local.properties
+.gradle
+.navigation
+capture.png
+output.json
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+atlassian-ide-plugin.xml
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/dictionaries/
+.idea/shelf/
+.idea/navEditor.xml
+
+# Log files
+*.log
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Android Secrets
+*.keystore
+!debug.keystore
+*.jks
+*.p12
+*.key
+google-services.json
+
+# NDK
+obj/
+jniLibs/
+
+# Screenshots
+screenshots/
+
+# Captures
+captures/
