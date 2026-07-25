@@ -32,9 +32,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.AlternativeOption
 import com.juanpablo0612.sickreshapex.domain.model.Analysis
 import com.juanpablo0612.sickreshapex.domain.model.ApplicationRequirements
@@ -67,7 +69,7 @@ fun RecommendationScreen(
 
     val phase = when {
         uiState.isLoading -> ScreenPhase.LOADING
-        uiState.error != null -> ScreenPhase.ERROR
+        uiState.errorRes != null -> ScreenPhase.ERROR
         uiState.analysis != null -> ScreenPhase.CONTENT
         else -> ScreenPhase.EMPTY
     }
@@ -76,10 +78,10 @@ fun RecommendationScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Recommendation") },
+                title = { Text(stringResource(R.string.recommendation_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
@@ -87,7 +89,11 @@ fun RecommendationScreen(
                         IconButton(onClick = { viewModel.toggleFavorite(analysisId) }) {
                             Icon(
                                 imageVector = if (uiState.isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                                contentDescription = if (uiState.isFavorite) "Remove from favorites" else "Add to favorites",
+                                contentDescription = if (uiState.isFavorite) {
+                                    stringResource(R.string.favorites_remove)
+                                } else {
+                                    stringResource(R.string.favorites_add)
+                                },
                                 tint = if (uiState.isFavorite) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
@@ -112,7 +118,7 @@ fun RecommendationScreen(
                 ScreenPhase.LOADING -> LoadingSkeleton(modifier = Modifier.fillMaxSize())
 
                 ScreenPhase.ERROR -> ErrorSection(
-                    message = uiState.error ?: "Something went wrong while loading this analysis.",
+                    message = stringResource(uiState.errorRes ?: R.string.error_loading_analysis),
                     onRetry = { viewModel.loadAnalysis(analysisId) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -125,10 +131,10 @@ fun RecommendationScreen(
 
                 ScreenPhase.EMPTY -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     EmptyState(
-                        title = "Analysis not found",
-                        description = "We couldn't find this analysis. It may have been removed.",
+                        title = stringResource(R.string.recommendation_not_found_title),
+                        description = stringResource(R.string.recommendation_not_found_body),
                         icon = Icons.Filled.SearchOff,
-                        action = { SecondaryActionButton(text = "Go Back", onClick = onBack) }
+                        action = { SecondaryActionButton(text = stringResource(R.string.action_go_back), onClick = onBack) }
                     )
                 }
             }
@@ -164,8 +170,8 @@ private fun ResultContent(
     ) {
         if (recommendation == null) {
             EmptyState(
-                title = "No recommendation available",
-                description = "This analysis doesn't have a recommendation yet.",
+                title = stringResource(R.string.recommendation_none_title),
+                description = stringResource(R.string.recommendation_none_body),
                 icon = Icons.Filled.Info,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -187,7 +193,7 @@ private fun ResultContent(
 
         StaggeredAppearance(index = 5) {
             PrimaryActionButton(
-                text = "View Technical Details",
+                text = stringResource(R.string.recommendation_view_technical_details),
                 onClick = onViewTechnicalDetails,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Filled.Insights
@@ -214,7 +220,7 @@ private fun HeroSection(recommendation: Recommendation, modifier: Modifier = Mod
             )
         )
         Column(modifier = Modifier.padding(24.dp)) {
-            StatusPill(text = "AI RECOMMENDATION", tone = PillTone.INFO, icon = Icons.Filled.AutoAwesome)
+            StatusPill(text = stringResource(R.string.recommendation_ai_overline), tone = PillTone.INFO, icon = Icons.Filled.AutoAwesome)
             Spacer(modifier = Modifier.height(18.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -223,7 +229,7 @@ private fun HeroSection(recommendation: Recommendation, modifier: Modifier = Mod
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Recommended sensor family",
+                        text = stringResource(R.string.recommendation_family_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -237,7 +243,7 @@ private fun HeroSection(recommendation: Recommendation, modifier: Modifier = Mod
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                ConfidenceRing(progress = recommendation.confidenceLevel, label = "confidence")
+                ConfidenceRing(progress = recommendation.confidenceLevel, label = stringResource(R.string.confidence_label))
             }
             Spacer(modifier = Modifier.height(18.dp))
             Text(
@@ -270,10 +276,10 @@ private fun HeroSection(recommendation: Recommendation, modifier: Modifier = Mod
 @Composable
 private fun RequirementsSection(requirements: ApplicationRequirements, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader(title = "Application Requirements")
+        SectionHeader(title = stringResource(R.string.requirements_title))
         SickCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                RequirementRow(label = "Object Type", value = requirements.tipo_objeto)
+                RequirementRow(label = stringResource(R.string.requirement_object_type), value = requirements.tipo_objeto)
                 HorizontalDivider(color = MaterialTheme.extendedColors.cardBorder)
                 Row(
                     modifier = Modifier
@@ -283,22 +289,22 @@ private fun RequirementsSection(requirements: ApplicationRequirements, modifier:
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Distance",
+                        text = stringResource(R.string.requirement_distance),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${requirements.distancia_mm} mm",
+                        text = stringResource(R.string.distance_mm_format, requirements.distancia_mm),
                         style = ReadoutType.medium,
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
                 HorizontalDivider(color = MaterialTheme.extendedColors.cardBorder)
-                RequirementRow(label = "Environment", value = requirements.ambiente)
+                RequirementRow(label = stringResource(R.string.requirement_environment), value = requirements.ambiente)
                 HorizontalDivider(color = MaterialTheme.extendedColors.cardBorder)
-                RequirementRow(label = "Surface", value = requirements.material_superficie)
+                RequirementRow(label = stringResource(R.string.requirement_surface), value = requirements.material_superficie)
                 HorizontalDivider(color = MaterialTheme.extendedColors.cardBorder)
-                RequirementRow(label = "Mounting", value = requirements.montaje)
+                RequirementRow(label = stringResource(R.string.requirement_mounting), value = requirements.montaje)
             }
         }
     }
@@ -308,7 +314,7 @@ private fun RequirementsSection(requirements: ApplicationRequirements, modifier:
 @Composable
 private fun ReasonsSection(reasons: List<Reason>, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader(title = "Why this sensor")
+        SectionHeader(title = stringResource(R.string.recommendation_why_title))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             reasons.forEachIndexed { index, reason ->
                 StaggeredAppearance(index = index) {
@@ -324,7 +330,7 @@ private fun ReasonsSection(reasons: List<Reason>, modifier: Modifier = Modifier)
 private fun SourcesSection(sources: List<SourceReference>, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
     Column(modifier = modifier.fillMaxWidth()) {
-        SectionHeader(title = "Sources")
+        SectionHeader(title = stringResource(R.string.sources_title))
         SickCard(modifier = Modifier.fillMaxWidth()) {
             Column {
                 sources.forEachIndexed { index, source ->
@@ -361,13 +367,17 @@ private fun AlternativesSection(alternatives: List<AlternativeOption>, modifier:
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Other options considered (${alternatives.size})",
+                text = stringResource(R.string.alternatives_title_count, alternatives.size),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Icon(
                 imageVector = Icons.Filled.ExpandMore,
-                contentDescription = if (expanded) "Collapse" else "Expand",
+                contentDescription = if (expanded) {
+                    stringResource(R.string.action_collapse)
+                } else {
+                    stringResource(R.string.action_expand)
+                },
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.rotate(chevronRotation)
             )
@@ -452,7 +462,7 @@ private fun ErrorSection(message: String, onRetry: () -> Unit, modifier: Modifie
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Something went wrong",
+                text = stringResource(R.string.error_generic_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -465,7 +475,7 @@ private fun ErrorSection(message: String, onRetry: () -> Unit, modifier: Modifie
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(20.dp))
-            SecondaryActionButton(text = "Try Again", onClick = onRetry, icon = Icons.Filled.Refresh)
+            SecondaryActionButton(text = stringResource(R.string.action_try_again), onClick = onRetry, icon = Icons.Filled.Refresh)
         }
     }
 }

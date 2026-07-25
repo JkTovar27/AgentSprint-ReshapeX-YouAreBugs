@@ -29,8 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.QuickExample
 import com.juanpablo0612.sickreshapex.domain.model.RecentAnalysis
 import com.juanpablo0612.sickreshapex.ui.components.AnimatedGradientBackdrop
@@ -105,9 +107,9 @@ fun HomeScreen(
                 }
 
                 item {
-                    SectionHeader(title = "Recent Analyses") {
+                    SectionHeader(title = stringResource(R.string.home_recent_analyses)) {
                         TextButton(onClick = onNavigateToHistory) {
-                            Text("See all")
+                            Text(stringResource(R.string.action_see_all))
                         }
                     }
                 }
@@ -115,8 +117,8 @@ fun HomeScreen(
                 if (uiState.recentAnalyses.isEmpty()) {
                     item {
                         EmptyState(
-                            title = "No analyses yet",
-                            description = "Run your first AI analysis above to see it here.",
+                            title = stringResource(R.string.no_analyses_yet),
+                            description = stringResource(R.string.home_empty_analyses_body),
                             icon = Icons.Default.History,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -181,12 +183,12 @@ private fun HomeHeader(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "SICK Select Copilot",
+                        text = stringResource(R.string.app_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "AI-guided sensor selection",
+                        text = stringResource(R.string.home_tagline),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -196,14 +198,14 @@ private fun HomeHeader(
                 IconButton(onClick = onNavigateToHistory) {
                     Icon(
                         imageVector = Icons.Default.History,
-                        contentDescription = "History",
+                        contentDescription = stringResource(R.string.history_title),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 IconButton(onClick = onNavigateToSettings) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
+                        contentDescription = stringResource(R.string.settings_title),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
@@ -249,7 +251,7 @@ private fun NewAnalysisSection(
     )
 
     Column(modifier = modifier) {
-        SectionHeader(title = "New Analysis")
+        SectionHeader(title = stringResource(R.string.home_new_analysis_title))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -261,15 +263,15 @@ private fun NewAnalysisSection(
                     OutlinedTextField(
                         value = description,
                         onValueChange = onDescriptionChange,
-                        label = { Text("Describe your industrial application") },
-                        placeholder = { Text("e.g. Detect cardboard boxes on a fast conveyor belt") },
+                        label = { Text(stringResource(R.string.home_describe_label)) },
+                        placeholder = { Text(stringResource(R.string.home_describe_hint)) },
                         interactionSource = interactionSource,
                         minLines = 4,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     PrimaryActionButton(
-                        text = "Start AI Analysis",
+                        text = stringResource(R.string.home_start_analysis),
                         onClick = onStartAnalysis,
                         icon = Icons.Default.AutoAwesome,
                         enabled = description.isNotBlank(),
@@ -297,11 +299,11 @@ private fun QuickExamplesSection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        SectionHeader(title = "Quick Examples")
+        SectionHeader(title = stringResource(R.string.home_quick_examples))
         if (examples.isEmpty()) {
             EmptyState(
-                title = "No examples yet",
-                description = "Quick-start templates will appear here once available.",
+                title = stringResource(R.string.home_examples_empty_title),
+                description = stringResource(R.string.home_examples_empty_body),
                 icon = Icons.Default.AutoAwesome,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -386,7 +388,7 @@ private fun RecentAnalysisCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatusPill(
-                    text = analysis.sensorFamily ?: "Pending",
+                    text = analysis.sensorFamily ?: stringResource(R.string.status_pending),
                     tone = if (analysis.sensorFamily != null) PillTone.SUCCESS else PillTone.NEUTRAL,
                     icon = Icons.Default.Sensors
                 )
@@ -459,16 +461,17 @@ private fun HomeLoadingSkeleton(modifier: Modifier = Modifier) {
 }
 
 /** Simple relative-time readout ("Just now", "2h ago", "3d ago") from an epoch-millis timestamp. */
+@Composable
 private fun relativeTimeFrom(timestampMillis: Long): String {
     val diffMillis = (System.currentTimeMillis() - timestampMillis).coerceAtLeast(0)
     val minutes = diffMillis / 60_000
     val hours = diffMillis / 3_600_000
     val days = diffMillis / 86_400_000
     return when {
-        minutes < 1 -> "Just now"
-        minutes < 60 -> "${minutes}m ago"
-        hours < 24 -> "${hours}h ago"
-        days < 7 -> "${days}d ago"
-        else -> "${days / 7}w ago"
+        minutes < 1 -> stringResource(R.string.time_just_now)
+        minutes < 60 -> stringResource(R.string.time_minutes_ago, minutes.toInt())
+        hours < 24 -> stringResource(R.string.time_hours_ago, hours.toInt())
+        days < 7 -> stringResource(R.string.time_days_ago, days.toInt())
+        else -> stringResource(R.string.time_weeks_ago, (days / 7).toInt())
     }
 }

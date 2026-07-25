@@ -37,8 +37,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.ui.theme.Motion
 import com.juanpablo0612.sickreshapex.ui.theme.ReadoutType
 import com.juanpablo0612.sickreshapex.ui.theme.extendedColors
@@ -209,7 +211,7 @@ fun ConfidenceRing(
                 horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "${(animatedProgress * 100).toInt()}%",
+                    text = stringResource(R.string.percent_format, (animatedProgress * 100).toInt()),
                     style = ReadoutType.medium,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center

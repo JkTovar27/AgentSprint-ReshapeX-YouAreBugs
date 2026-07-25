@@ -1,0 +1,144 @@
+<resources>
+    <!-- Common actions -->
+    <string name="action_back">Atrás</string>
+    <string name="action_see_all">Ver todo</string>
+    <string name="action_go_back">Volver</string>
+    <string name="action_try_again">Reintentar</string>
+    <string name="action_expand">Expandir</string>
+    <string name="action_collapse">Contraer</string>
+
+    <!-- Common formats -->
+    <string name="percent_format">%1$d%%</string>
+    <string name="key_value_format">%1$s: %2$s</string>
+    <string name="confidence_label">confianza</string>
+    <string name="confidence_percent">%1$d%% de confianza</string>
+    <string name="distance_mm_format">%1$d mm</string>
+
+    <!-- Relative time -->
+    <string name="time_just_now">Justo ahora</string>
+    <string name="time_minutes_ago">hace %1$d min</string>
+    <string name="time_hours_ago">hace %1$d h</string>
+    <string name="time_days_ago">hace %1$d d</string>
+    <string name="time_weeks_ago">hace %1$d sem</string>
+    <string name="time_months_ago">hace %1$d meses</string>
+    <string name="time_years_ago">hace %1$d años</string>
+
+    <!-- Splash -->
+    <string name="splash_initializing">INICIALIZANDO PIPELINE DE IA</string>
+
+    <!-- Home -->
+    <string name="home_tagline">Selección de sensores guiada por IA</string>
+    <string name="home_recent_analyses">Análisis recientes</string>
+    <string name="no_analyses_yet">Aún no hay análisis</string>
+    <string name="home_empty_analyses_body">Ejecuta tu primer análisis con IA arriba para verlo aquí.</string>
+    <string name="home_new_analysis_title">Nuevo análisis</string>
+    <string name="home_describe_label">Describe tu aplicación industrial</string>
+    <string name="home_describe_hint">p. ej. Detectar cajas de cartón en una banda transportadora rápida</string>
+    <string name="home_start_analysis">Iniciar análisis con IA</string>
+    <string name="home_quick_examples">Ejemplos rápidos</string>
+    <string name="home_examples_empty_title">Aún no hay ejemplos</string>
+    <string name="home_examples_empty_body">Las plantillas de inicio rápido aparecerán aquí cuando estén disponibles.</string>
+    <string name="status_pending">Pendiente</string>
+
+    <!-- History -->
+    <string name="history_title">Historial</string>
+    <string name="history_empty_body">Ejecuta tu primer análisis con IA desde Inicio y aparecerá aquí para consultarlo rápidamente.</string>
+    <string name="history_no_match">Ningún análisis coincide con \"%1$s\".</string>
+    <string name="history_search_placeholder">Buscar análisis anteriores</string>
+    <string name="history_clear_search">Borrar búsqueda</string>
+    <string name="history_unclassified">Sin clasificar</string>
+    <string name="favorites_add">Añadir a favoritos</string>
+    <string name="favorites_remove">Quitar de favoritos</string>
+
+    <!-- Processing / agent pipeline -->
+    <string name="processing_analyzing_application">Analizando la aplicación</string>
+    <string name="processing_live_step">"EN VIVO  ·  Paso %1$d de 5"</string>
+    <string name="processing_pipeline_stopped">Pipeline detenido</string>
+    <string name="processing_completed_ratio">%1$d/5</string>
+    <string name="processing_stage_failed">%1$s falló</string>
+    <string name="processing_pipeline_failed">El pipeline falló</string>
+    <string name="agent_planner">Planificador</string>
+    <string name="agent_retriever">Recuperador</string>
+    <string name="agent_validator">Validador</string>
+    <string name="agent_evaluator">Evaluador</string>
+    <string name="agent_responder">Respondedor</string>
+    <string name="agent_planner_description">Extrayendo requisitos estructurados de tu descripción</string>
+    <string name="agent_retriever_description">Buscando en la base de conocimiento de sensores SICK</string>
+    <string name="agent_validator_description">Verificando los candidatos contra cada requisito</string>
+    <string name="agent_evaluator_description">Calculando la confianza del mejor candidato</string>
+    <string name="agent_responder_description">Preparando tu recomendación</string>
+    <string name="stage_done">Listo</string>
+    <string name="stage_failed">Falló</string>
+    <string name="processing_requirements_extracted">Requisitos extraídos</string>
+    <plurals name="candidates_found">
+        <item quantity="one">%1$d candidato encontrado</item>
+        <item quantity="other">%1$d candidatos encontrados</item>
+    </plurals>
+    <plurals name="sources_count">
+        <item quantity="one">%1$d fuente</item>
+        <item quantity="other">%1$d fuentes</item>
+    </plurals>
+    <plurals name="viable_count">
+        <item quantity="one">%1$d viable</item>
+        <item quantity="other">%1$d viables</item>
+    </plurals>
+    <plurals name="discarded_count">
+        <item quantity="one">%1$d descartado</item>
+        <item quantity="other">%1$d descartados</item>
+    </plurals>
+    <string name="decision_respond">Responder</string>
+    <string name="decision_clarify">Aclarar</string>
+    <string name="decision_continue">Continuar</string>
+    <string name="decision_escalate">Escalar</string>
+    <string name="processing_next_action">Siguiente: %1$s</string>
+    <string name="processing_recommendation_ready">Recomendación lista</string>
+    <string name="processing_analysis_complete">Análisis completado.</string>
+    <string name="error_unexpected_analysis">Error inesperado al analizar la aplicación.</string>
+
+    <!-- Recommendation -->
+    <string name="recommendation_title">Recomendación</string>
+    <string name="error_loading_analysis">Algo salió mal al cargar este análisis.</string>
+    <string name="error_analysis_not_found">No pudimos encontrar este análisis.</string>
+    <string name="recommendation_not_found_title">Análisis no encontrado</string>
+    <string name="recommendation_not_found_body">No pudimos encontrar este análisis. Es posible que haya sido eliminado.</string>
+    <string name="recommendation_none_title">No hay recomendación disponible</string>
+    <string name="recommendation_none_body">Este análisis aún no tiene una recomendación.</string>
+    <string name="recommendation_view_technical_details">Ver detalles técnicos</string>
+    <string name="recommendation_ai_overline">RECOMENDACIÓN DE IA</string>
+    <string name="recommendation_family_label">Familia de sensores recomendada</string>
+    <string name="requirements_title">Requisitos de la aplicación</string>
+    <string name="requirement_object_type">Tipo de objeto</string>
+    <string name="requirement_distance">Distancia</string>
+    <string name="requirement_environment">Entorno</string>
+    <string name="requirement_surface">Superficie</string>
+    <string name="requirement_mounting">Montaje</string>
+    <string name="recommendation_why_title">Por qué este sensor</string>
+    <string name="sources_title">Fuentes</string>
+    <string name="alternatives_title_count">Otras opciones consideradas (%1$d)</string>
+    <string name="error_generic_title">Algo salió mal</string>
+    <string name="link_open_cd">Abrir enlace</string>
+    <string name="alternative_discarded">Descartado</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_appearance_description">Elige cómo se ve SICK Select Copilot. \"Sistema\" sigue la configuración de tu dispositivo.</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_system">Sistema</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="settings_pipeline_alerts">Alertas del pipeline</string>
+    <string name="settings_pipeline_alerts_description">Recibe una notificación cuando el pipeline de agentes termine un análisis.</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_version">Versión %1$s</string>
+    <string name="settings_powered_by">Impulsado por un pipeline de IA multiagente.</string>
+
+    <!-- Technical details (NavGraph placeholder) -->
+    <string name="technical_details_title">Detalles técnicos</string>
+    <string name="coming_soon_title">Próximamente</string>
+    <string name="technical_details_placeholder_body">Las especificaciones técnicas completas a nivel de hoja de datos aparecerán aquí en una futura actualización.</string>
+
+    <!-- Domain errors -->
+    <string name="error_network">Error de red, comprueba tu conexión</string>
+    <string name="error_server">Error del servidor, inténtalo de nuevo más tarde</string>
+</resources>

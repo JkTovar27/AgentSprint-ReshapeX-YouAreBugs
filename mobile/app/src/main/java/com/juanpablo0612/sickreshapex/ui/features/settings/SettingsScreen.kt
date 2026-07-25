@@ -21,8 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.ui.components.PillTone
 import com.juanpablo0612.sickreshapex.ui.components.SectionHeader
 import com.juanpablo0612.sickreshapex.ui.components.SickCard
@@ -32,7 +34,13 @@ import com.juanpablo0612.sickreshapex.ui.theme.Motion
 import com.juanpablo0612.sickreshapex.ui.theme.ThemePreference
 import org.koin.androidx.compose.koinViewModel
 
-private val PIPELINE_STAGES = listOf("Planner", "Retriever", "Validator", "Evaluator", "Responder")
+private val PIPELINE_STAGES = listOf(
+    R.string.agent_planner,
+    R.string.agent_retriever,
+    R.string.agent_validator,
+    R.string.agent_evaluator,
+    R.string.agent_responder
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,10 +53,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
             )
@@ -96,11 +104,11 @@ private fun AppearanceSection(
     onSelect: (ThemePreference) -> Unit
 ) {
     Column {
-        SectionHeader(title = "Appearance")
+        SectionHeader(title = stringResource(R.string.settings_appearance))
         SickCard {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Choose how SICK Select Copilot looks. \"System\" follows your device setting.",
+                    text = stringResource(R.string.settings_appearance_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -110,21 +118,21 @@ private fun AppearanceSection(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     ThemeOption(
-                        label = "Light",
+                        label = stringResource(R.string.theme_light),
                         icon = Icons.Default.LightMode,
                         selected = selected == ThemePreference.LIGHT,
                         onClick = { onSelect(ThemePreference.LIGHT) },
                         modifier = Modifier.weight(1f)
                     )
                     ThemeOption(
-                        label = "Dark",
+                        label = stringResource(R.string.theme_dark),
                         icon = Icons.Default.DarkMode,
                         selected = selected == ThemePreference.DARK,
                         onClick = { onSelect(ThemePreference.DARK) },
                         modifier = Modifier.weight(1f)
                     )
                     ThemeOption(
-                        label = "System",
+                        label = stringResource(R.string.theme_system),
                         icon = Icons.Default.SettingsSuggest,
                         selected = selected == ThemePreference.SYSTEM,
                         onClick = { onSelect(ThemePreference.SYSTEM) },
@@ -204,7 +212,7 @@ private fun NotificationsSection(
     onToggle: (Boolean) -> Unit
 ) {
     Column {
-        SectionHeader(title = "Notifications")
+        SectionHeader(title = stringResource(R.string.settings_notifications))
         SickCard {
             Row(
                 modifier = Modifier
@@ -221,12 +229,12 @@ private fun NotificationsSection(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Pipeline alerts",
+                        text = stringResource(R.string.settings_pipeline_alerts),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Get notified when the agent pipeline finishes an analysis.",
+                        text = stringResource(R.string.settings_pipeline_alerts_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -241,22 +249,22 @@ private fun NotificationsSection(
 @Composable
 private fun AboutSection() {
     Column {
-        SectionHeader(title = "About")
+        SectionHeader(title = stringResource(R.string.settings_about))
         SickCard {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "SICK Select Copilot",
+                    text = stringResource(R.string.app_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Version 1.0",
+                    text = stringResource(R.string.settings_version, "1.0"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(14.dp))
                 Text(
-                    text = "Powered by a multi-agent AI pipeline.",
+                    text = stringResource(R.string.settings_powered_by),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -267,8 +275,8 @@ private fun AboutSection() {
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    PIPELINE_STAGES.forEach { stage ->
-                        StatusPill(text = stage, tone = PillTone.INFO)
+                    PIPELINE_STAGES.forEach { stageRes ->
+                        StatusPill(text = stringResource(stageRes), tone = PillTone.INFO)
                     }
                 }
             }

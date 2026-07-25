@@ -1,5 +1,6 @@
 package com.juanpablo0612.sickreshapex.ui.features.processing
 
+import androidx.annotation.StringRes
 import com.juanpablo0612.sickreshapex.domain.model.AgentStage
 import com.juanpablo0612.sickreshapex.domain.model.EvaluatorOutput
 import com.juanpablo0612.sickreshapex.domain.model.PlannerOutput
@@ -23,7 +24,8 @@ data class ProcessingState(
     val responderOutput: ResponderOutput? = null,
     val analysisId: String? = null,
     val failedStage: AgentStage? = null,
-    val error: String? = null
+    val error: String? = null,
+    @StringRes val errorRes: Int? = null
 ) {
     val completedCount: Int
         get() = stageStatuses.values.count { it == StageStatus.DONE }
@@ -32,5 +34,5 @@ data class ProcessingState(
         get() = completedCount / AgentStage.entries.size.toFloat()
 
     val hasFailed: Boolean
-        get() = error != null
+        get() = error != null || errorRes != null
 }

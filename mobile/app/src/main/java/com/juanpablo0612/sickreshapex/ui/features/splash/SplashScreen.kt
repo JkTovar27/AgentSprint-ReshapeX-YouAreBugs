@@ -22,7 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.ui.components.PulsingDot
 import com.juanpablo0612.sickreshapex.ui.components.RadarPulse
 import com.juanpablo0612.sickreshapex.ui.theme.Motion
@@ -114,7 +116,7 @@ fun SplashScreen(onNext: () -> Unit) {
                     )
             ) {
                 Text(
-                    text = "SICK",
+                    text = stringResource(R.string.splash_brand),
                     style = MaterialTheme.typography.displayLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -131,7 +133,7 @@ fun SplashScreen(onNext: () -> Unit) {
                     )
             ) {
                 Text(
-                    text = "Select Copilot",
+                    text = stringResource(R.string.splash_product_name),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -147,7 +149,7 @@ fun SplashScreen(onNext: () -> Unit) {
                     PulsingDot(color = MaterialTheme.extendedColors.scanCyan, size = 6.dp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "INITIALIZING AI PIPELINE",
+                        text = stringResource(R.string.splash_initializing),
                         style = ReadoutType.small,
                         color = MaterialTheme.extendedColors.scanCyan
                     )

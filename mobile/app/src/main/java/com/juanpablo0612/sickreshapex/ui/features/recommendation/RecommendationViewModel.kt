@@ -2,6 +2,7 @@ package com.juanpablo0612.sickreshapex.ui.features.recommendation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.repository.AnalysisRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,7 @@ class RecommendationViewModel(private val repository: AnalysisRepository) : View
 
     fun loadAnalysis(id: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, errorRes = null) }
             try {
                 val analysis = repository.getAnalysisById(id)
                 val isFavorite = repository.getFavorites().any { favorite -> favorite.analysisId == id }
@@ -29,12 +30,12 @@ class RecommendationViewModel(private val repository: AnalysisRepository) : View
                         isLoading = false,
                         analysis = analysis,
                         isFavorite = isFavorite,
-                        error = if (analysis == null) "We couldn't find this analysis." else null
+                        errorRes = if (analysis == null) R.string.error_analysis_not_found else null
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, error = e.message ?: "Something went wrong while loading this analysis.")
+                    it.copy(isLoading = false, errorRes = R.string.error_loading_analysis)
                 }
             }
         }

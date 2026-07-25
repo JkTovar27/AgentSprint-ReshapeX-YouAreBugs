@@ -21,8 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.RecentAnalysis
 import com.juanpablo0612.sickreshapex.ui.components.AnimatedGradientBackdrop
 import com.juanpablo0612.sickreshapex.ui.components.EmptyState
@@ -48,10 +50,10 @@ fun HistoryScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("History") },
+                title = { Text(stringResource(R.string.history_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -75,8 +77,8 @@ fun HistoryScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     EmptyState(
-                        title = "No analyses yet",
-                        description = "Run your first AI analysis from Home and it will show up here for quick reference.",
+                        title = stringResource(R.string.no_analyses_yet),
+                        description = stringResource(R.string.history_empty_body),
                         icon = Icons.Filled.History
                     )
                 }
@@ -131,7 +133,7 @@ private fun HistoryList(
         if (filtered.isEmpty()) {
             item {
                 Text(
-                    text = "No analyses match \"$query\".",
+                    text = stringResource(R.string.history_no_match, query),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -162,12 +164,12 @@ private fun HistorySearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Search past analyses") },
+        placeholder = { Text(stringResource(R.string.history_search_placeholder)) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Filled.Close, contentDescription = "Clear search")
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.history_clear_search))
                 }
             }
         },
@@ -195,7 +197,7 @@ private fun HistoryAnalysisRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatusPill(
-                    text = analysis.sensorFamily ?: "Unclassified",
+                    text = analysis.sensorFamily ?: stringResource(R.string.history_unclassified),
                     tone = if (analysis.sensorFamily != null) PillTone.INFO else PillTone.NEUTRAL,
                     icon = Icons.Filled.Sensors
                 )
@@ -270,7 +272,11 @@ private fun FavoriteToggleButton(
     ) {
         Icon(
             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+            contentDescription = if (isFavorite) {
+                stringResource(R.string.favorites_remove)
+            } else {
+                stringResource(R.string.favorites_add)
+            },
             tint = tint,
             modifier = Modifier.scale(scale.value)
         )
@@ -295,6 +301,7 @@ private fun HistoryLoadingSkeleton(modifier: Modifier = Modifier) {
 }
 
 /** Simple manual "time ago" formatting — no date/time dependency needed. */
+@Composable
 private fun relativeTimeText(epochMillis: Long, nowMillis: Long = System.currentTimeMillis()): String {
     val diffMillis = (nowMillis - epochMillis).coerceAtLeast(0)
     val minutes = diffMillis / 60_000
@@ -302,12 +309,12 @@ private fun relativeTimeText(epochMillis: Long, nowMillis: Long = System.current
     val days = diffMillis / 86_400_000
 
     return when {
-        minutes < 1 -> "Just now"
-        minutes < 60 -> "${minutes}m ago"
-        hours < 24 -> "${hours}h ago"
-        days < 7 -> "${days}d ago"
-        days < 30 -> "${days / 7}w ago"
-        days < 365 -> "${days / 30}mo ago"
-        else -> "${days / 365}y ago"
+        minutes < 1 -> stringResource(R.string.time_just_now)
+        minutes < 60 -> stringResource(R.string.time_minutes_ago, minutes.toInt())
+        hours < 24 -> stringResource(R.string.time_hours_ago, hours.toInt())
+        days < 7 -> stringResource(R.string.time_days_ago, days.toInt())
+        days < 30 -> stringResource(R.string.time_weeks_ago, (days / 7).toInt())
+        days < 365 -> stringResource(R.string.time_months_ago, (days / 30).toInt())
+        else -> stringResource(R.string.time_years_ago, (days / 365).toInt())
     }
 }

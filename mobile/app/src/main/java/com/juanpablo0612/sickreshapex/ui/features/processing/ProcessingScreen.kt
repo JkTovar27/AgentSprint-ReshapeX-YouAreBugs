@@ -30,9 +30,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.*
 import com.juanpablo0612.sickreshapex.ui.components.*
 import com.juanpablo0612.sickreshapex.ui.theme.Motion
@@ -111,11 +114,12 @@ fun ProcessingScreen(
 
                     PipelineStepper(state = uiState)
 
-                    if (uiState.error != null) {
+                    if (uiState.hasFailed) {
                         Spacer(modifier = Modifier.height(8.dp))
                         PipelineErrorCard(
                             failedStage = uiState.failedStage,
-                            reason = uiState.error.orEmpty(),
+                            reason = uiState.error
+                                ?: uiState.errorRes?.let { stringResource(it) }.orEmpty(),
                             onBack = onBack
                         )
                     }
@@ -158,7 +162,7 @@ private fun ProcessingHeader(
         IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.action_back),
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
@@ -173,7 +177,7 @@ private fun ProcessingHeader(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Analyzing application",
+                    text = stringResource(R.string.processing_analyzing_application),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -195,21 +199,25 @@ private fun LiveStatusRow(state: ProcessingState, modifier: Modifier = Modifier)
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (state.error == null) {
+        if (!state.hasFailed) {
             PulsingDot(color = MaterialTheme.extendedColors.scanCyan)
             Spacer(modifier = Modifier.width(8.dp))
             val step = (state.completedCount + 1).coerceAtMost(5)
             Text(
-                text = "LIVE  ·  Step $step of 5",
+                text = stringResource(R.string.processing_live_step, step),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.extendedColors.scanCyan
             )
         } else {
-            StatusPill(text = "Pipeline stopped", tone = PillTone.ERROR, icon = Icons.Filled.Warning)
+            StatusPill(
+                text = stringResource(R.string.processing_pipeline_stopped),
+                tone = PillTone.ERROR,
+                icon = Icons.Filled.Warning
+            )
         }
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = "${state.completedCount}/5",
+            text = stringResource(R.string.processing_completed_ratio, state.completedCount),
             style = ReadoutType.small,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -259,7 +267,8 @@ private fun PipelineErrorCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = failedStage?.let { "${stageLabel(it)} failed" } ?: "Pipeline failed",
+                    text = failedStage?.let { stringResource(R.string.processing_stage_failed, stageLabel(it)) }
+                        ?: stringResource(R.string.processing_pipeline_failed),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -271,7 +280,11 @@ private fun PipelineErrorCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(14.dp))
-            SecondaryActionButton(text = "Back", onClick = onBack, modifier = Modifier.fillMaxWidth())
+            SecondaryActionButton(
+                text = stringResource(R.string.action_back),
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -286,21 +299,27 @@ private val PIPELINE_STAGES = listOf(
     AgentStage.RESPONDER
 )
 
-private fun stageLabel(stage: AgentStage): String = when (stage) {
-    AgentStage.PLANNER -> "Planner"
-    AgentStage.RETRIEVER -> "Retriever"
-    AgentStage.VALIDATOR -> "Validator"
-    AgentStage.EVALUATOR -> "Evaluator"
-    AgentStage.RESPONDER -> "Responder"
-}
+@Composable
+private fun stageLabel(stage: AgentStage): String = stringResource(
+    when (stage) {
+        AgentStage.PLANNER -> R.string.agent_planner
+        AgentStage.RETRIEVER -> R.string.agent_retriever
+        AgentStage.VALIDATOR -> R.string.agent_validator
+        AgentStage.EVALUATOR -> R.string.agent_evaluator
+        AgentStage.RESPONDER -> R.string.agent_responder
+    }
+)
 
-private fun stageDescription(stage: AgentStage): String = when (stage) {
-    AgentStage.PLANNER -> "Extracting structured requirements from your description"
-    AgentStage.RETRIEVER -> "Searching the SICK sensor knowledge base"
-    AgentStage.VALIDATOR -> "Checking candidates against every requirement"
-    AgentStage.EVALUATOR -> "Scoring confidence in the leading match"
-    AgentStage.RESPONDER -> "Preparing your recommendation"
-}
+@Composable
+private fun stageDescription(stage: AgentStage): String = stringResource(
+    when (stage) {
+        AgentStage.PLANNER -> R.string.agent_planner_description
+        AgentStage.RETRIEVER -> R.string.agent_retriever_description
+        AgentStage.VALIDATOR -> R.string.agent_validator_description
+        AgentStage.EVALUATOR -> R.string.agent_evaluator_description
+        AgentStage.RESPONDER -> R.string.agent_responder_description
+    }
+)
 
 private fun stageIcon(stage: AgentStage): ImageVector = when (stage) {
     AgentStage.PLANNER -> Icons.Filled.Psychology
@@ -379,8 +398,16 @@ private fun StageHeaderRow(stage: AgentStage, status: StageStatus, modifier: Mod
         Spacer(modifier = Modifier.width(8.dp))
         when (status) {
             StageStatus.ACTIVE -> PulsingDot(color = MaterialTheme.colorScheme.primary)
-            StageStatus.DONE -> StatusPill(text = "Done", tone = PillTone.SUCCESS, icon = Icons.Filled.Check)
-            StageStatus.ERROR -> StatusPill(text = "Failed", tone = PillTone.ERROR, icon = Icons.Filled.ErrorOutline)
+            StageStatus.DONE -> StatusPill(
+                text = stringResource(R.string.stage_done),
+                tone = PillTone.SUCCESS,
+                icon = Icons.Filled.Check
+            )
+            StageStatus.ERROR -> StatusPill(
+                text = stringResource(R.string.stage_failed),
+                tone = PillTone.ERROR,
+                icon = Icons.Filled.ErrorOutline
+            )
             StageStatus.PENDING -> Unit
         }
     }
@@ -510,20 +537,22 @@ private fun PlannerStageCard(output: PlannerOutput, modifier: Modifier = Modifie
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Requirements extracted",
+                    text = stringResource(R.string.processing_requirements_extracted),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "${(output.extractionConfidence * 100).toInt()}%",
+                    text = stringResource(R.string.percent_format, (output.extractionConfidence * 100).toInt()),
                     style = ReadoutType.small,
                     color = MaterialTheme.extendedColors.scanCyan
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             ChipsRow(
-                items = output.structuredRequirements.map { (key, value) -> "$key: $value" },
+                items = output.structuredRequirements.map { (key, value) ->
+                    stringResource(R.string.key_value_format, key, value)
+                },
                 tone = PillTone.INFO
             )
             if (output.plannerNotes.isNotBlank()) {
@@ -546,13 +575,21 @@ private fun RetrieverStageCard(output: RetrieverOutput, modifier: Modifier = Mod
         Column(modifier = Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${output.candidates.size} candidates found",
+                    text = pluralStringResource(
+                        R.plurals.candidates_found,
+                        output.candidates.size,
+                        output.candidates.size
+                    ),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "${output.sources.size} sources",
+                    text = pluralStringResource(
+                        R.plurals.sources_count,
+                        output.sources.size,
+                        output.sources.size
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -579,12 +616,20 @@ private fun ValidatorStageCard(output: ValidatorOutput, modifier: Modifier = Mod
         Column(modifier = Modifier.padding(14.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusPill(
-                    text = "${output.viableCandidates.size} viable",
+                    text = pluralStringResource(
+                        R.plurals.viable_count,
+                        output.viableCandidates.size,
+                        output.viableCandidates.size
+                    ),
                     tone = PillTone.SUCCESS,
                     icon = Icons.Filled.CheckCircle
                 )
                 StatusPill(
-                    text = "${output.discardedCandidates.size} discarded",
+                    text = pluralStringResource(
+                        R.plurals.discarded_count,
+                        output.discardedCandidates.size,
+                        output.discardedCandidates.size
+                    ),
                     tone = PillTone.ERROR,
                     icon = Icons.Filled.Close
                 )
@@ -612,16 +657,16 @@ private fun EvaluatorStageCard(output: EvaluatorOutput, modifier: Modifier = Mod
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ConfidenceRing(progress = output.confidence, label = "confidence")
+            ConfidenceRing(progress = output.confidence, label = stringResource(R.string.confidence_label))
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val (tone, label) = when (output.nextStep) {
-                    NextStep.RESPOND -> PillTone.SUCCESS to "Respond"
-                    NextStep.CLARIFY -> PillTone.WARNING to "Clarify"
-                    NextStep.CONTINUE -> PillTone.INFO to "Continue"
-                    NextStep.ESCALATE -> PillTone.ERROR to "Escalate"
+                    NextStep.RESPOND -> PillTone.SUCCESS to stringResource(R.string.decision_respond)
+                    NextStep.CLARIFY -> PillTone.WARNING to stringResource(R.string.decision_clarify)
+                    NextStep.CONTINUE -> PillTone.INFO to stringResource(R.string.decision_continue)
+                    NextStep.ESCALATE -> PillTone.ERROR to stringResource(R.string.decision_escalate)
                 }
-                StatusPill(text = "Next: $label", tone = tone)
+                StatusPill(text = stringResource(R.string.processing_next_action, label), tone = tone)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = output.reasoning,
@@ -660,7 +705,10 @@ private fun ResponderStageCard(output: ResponderOutput, modifier: Modifier = Mod
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                StatusPill(text = "${(output.confidence * 100).toInt()}% confidence", tone = PillTone.SUCCESS)
+                StatusPill(
+                    text = stringResource(R.string.confidence_percent, (output.confidence * 100).toInt()),
+                    tone = PillTone.SUCCESS
+                )
             }
         }
     }
@@ -712,14 +760,14 @@ private fun CompletionBeatCard(responderOutput: ResponderOutput?, modifier: Modi
             }
             Spacer(modifier = Modifier.height(18.dp))
             Text(
-                text = "Recommendation ready",
+                text = stringResource(R.string.processing_recommendation_ready),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = responderOutput?.message ?: "Analysis complete.",
+                text = responderOutput?.message ?: stringResource(R.string.processing_analysis_complete),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -727,7 +775,10 @@ private fun CompletionBeatCard(responderOutput: ResponderOutput?, modifier: Modi
             if (responderOutput != null) {
                 Spacer(modifier = Modifier.height(12.dp))
                 StatusPill(
-                    text = "${(responderOutput.confidence * 100).toInt()}% confidence",
+                    text = stringResource(
+                        R.string.confidence_percent,
+                        (responderOutput.confidence * 100).toInt()
+                    ),
                     tone = PillTone.SUCCESS
                 )
             }

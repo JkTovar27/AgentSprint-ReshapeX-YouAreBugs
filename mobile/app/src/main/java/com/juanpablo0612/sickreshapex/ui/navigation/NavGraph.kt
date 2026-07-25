@@ -15,11 +15,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.ui.components.EmptyState
 import com.juanpablo0612.sickreshapex.ui.features.history.HistoryScreen
 import com.juanpablo0612.sickreshapex.ui.features.home.HomeScreen
@@ -127,10 +129,10 @@ private fun TechnicalDetailsPlaceholderScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Technical Details") },
+                title = { Text(stringResource(R.string.technical_details_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
             )
@@ -143,8 +145,8 @@ private fun TechnicalDetailsPlaceholderScreen(onBack: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             EmptyState(
-                title = "Coming soon",
-                description = "Full datasheet-level technical specifications will appear here in a future update.",
+                title = stringResource(R.string.coming_soon_title),
+                description = stringResource(R.string.technical_details_placeholder_body),
                 icon = Icons.Filled.Construction
             )
         }

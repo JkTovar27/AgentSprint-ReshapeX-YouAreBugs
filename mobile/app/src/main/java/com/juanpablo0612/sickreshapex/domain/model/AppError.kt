@@ -1,7 +1,10 @@
 package com.juanpablo0612.sickreshapex.domain.model
 
-sealed class AppError(val message: String) {
-    object NetworkError : AppError("Network error, please check your connection")
-    object ServerError : AppError("Server error, please try again later")
-    data class UnknownError(val error: String) : AppError(error)
+import androidx.annotation.StringRes
+import com.juanpablo0612.sickreshapex.R
+
+sealed class AppError(@StringRes val messageRes: Int?) {
+    object NetworkError : AppError(R.string.error_network)
+    object ServerError : AppError(R.string.error_server)
+    data class UnknownError(val error: String) : AppError(null)
 }

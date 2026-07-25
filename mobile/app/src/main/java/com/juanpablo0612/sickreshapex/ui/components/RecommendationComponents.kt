@@ -25,8 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.AlternativeOption
 import com.juanpablo0612.sickreshapex.domain.model.Reason
 import com.juanpablo0612.sickreshapex.domain.model.SourceReference
@@ -120,7 +122,7 @@ fun SourceLinkRow(
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
             imageVector = Icons.Filled.OpenInNew,
-            contentDescription = "Open link",
+            contentDescription = stringResource(R.string.link_open_cd),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp)
         )
@@ -145,7 +147,7 @@ fun AlternativeCard(alternative: AlternativeOption, modifier: Modifier = Modifie
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                StatusPill(text = "Discarded", tone = PillTone.WARNING, icon = Icons.Filled.Warning)
+                StatusPill(text = stringResource(R.string.alternative_discarded), tone = PillTone.WARNING, icon = Icons.Filled.Warning)
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text(

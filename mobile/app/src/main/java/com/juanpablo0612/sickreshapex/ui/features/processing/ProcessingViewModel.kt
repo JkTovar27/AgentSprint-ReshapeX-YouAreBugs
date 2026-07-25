@@ -2,6 +2,7 @@ package com.juanpablo0612.sickreshapex.ui.features.processing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.juanpablo0612.sickreshapex.R
 import com.juanpablo0612.sickreshapex.domain.model.AgentStage
 import com.juanpablo0612.sickreshapex.domain.model.PipelineEvent
 import com.juanpablo0612.sickreshapex.domain.model.StageStatus
@@ -36,7 +37,10 @@ class ProcessingViewModel(
             pipelineRepository.streamAnalysis(description)
                 .catch { throwable ->
                     _uiState.update {
-                        it.copy(error = throwable.message ?: "Unexpected error while analyzing the application.")
+                        it.copy(
+                            error = throwable.message,
+                            errorRes = R.string.error_unexpected_analysis
+                        )
                     }
                 }
                 .collect { event -> reduce(event) }
