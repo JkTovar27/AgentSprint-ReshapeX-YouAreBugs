@@ -134,6 +134,14 @@ fun ProcessingScreen(
                         )
                     }
 
+                    if (uiState.finishedWithoutData) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        PipelineErrorCard(
+                            reason = stringResource(R.string.processing_no_results_reason),
+                            onBack = onBack
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(32.dp))
                 }
 
@@ -220,6 +228,12 @@ private fun LiveStatusRow(state: ProcessingState, modifier: Modifier = Modifier)
                 text = stringResource(R.string.clarification_needed_pill),
                 tone = PillTone.WARNING,
                 icon = Icons.AutoMirrored.Filled.HelpOutline
+            )
+
+            state.finishedWithoutData -> StatusPill(
+                text = stringResource(R.string.processing_no_results_pill),
+                tone = PillTone.WARNING,
+                icon = Icons.Filled.Warning
             )
 
             else -> {

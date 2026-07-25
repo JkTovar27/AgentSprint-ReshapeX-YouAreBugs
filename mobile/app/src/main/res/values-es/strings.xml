@@ -56,6 +56,8 @@
     <string name="processing_pipeline_stopped">Pipeline detenido</string>
     <string name="processing_completed_ratio">%1$d/5</string>
     <string name="processing_pipeline_failed">El pipeline falló</string>
+    <string name="processing_no_results_pill">Sin resultados</string>
+    <string name="processing_no_results_reason">El pipeline terminó pero no devolvió recomendaciones. El backend completó todas las etapas sin producir datos de sensores — revisa los registros del orquestador para esta sesión.</string>
     <string name="agent_intake">Recepción</string>
     <string name="agent_clarification">Aclaración</string>
     <string name="agent_retrieval">Búsqueda</string>

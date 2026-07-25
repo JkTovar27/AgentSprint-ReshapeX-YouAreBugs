@@ -1,5 +1,6 @@
 package com.juanpablo0612.sickreshapex.data.repository
 
+import android.util.Log
 import com.juanpablo0612.sickreshapex.data.remote.OrchestratorApi
 import com.juanpablo0612.sickreshapex.data.remote.PipelineFrameParser
 import com.juanpablo0612.sickreshapex.data.remote.toAnalysis
@@ -55,8 +56,10 @@ class WebSocketAgentPipelineRepository(
                     }
 
                     is PipelineEvent.FinalResult -> {
+                        // An empty shortlist means there is nothing to recommend — don't save a
+                        // hollow Analysis; the UI reports "finished without data" instead.
                         val analysis = event.result
-                            .takeIf { it.status == ResultStatus.RECOMMENDED }
+                            .takeIf { it.status == ResultStatus.RECOMMENDED && it.shortlist.isNotEmpty() }
                             ?.toAnalysis(userQuery, sessionId, intake)
                             ?.also { analysisRepository.saveAnalysis(it) }
                         event.copy(analysis = analysis)
@@ -77,6 +80,7 @@ class WebSocketAgentPipelineRepository(
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
+                    Log.d(TAG, "frame <- $text")
                     val event = runCatching { parser.parse(text) }
                         .getOrNull() ?: return // unknown or malformed frame — keep streaming
 
@@ -99,6 +103,7 @@ class WebSocketAgentPipelineRepository(
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    Log.w(TAG, "websocket failure (http=${response?.code})", t)
                     close(IOException("Pipeline websocket failed: ${t.message}", t))
                 }
 
@@ -120,5 +125,6 @@ class WebSocketAgentPipelineRepository(
 
     private companion object {
         const val NORMAL_CLOSURE = 1000
+        const val TAG = "OrchestratorWS"
     }
 }

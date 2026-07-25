@@ -40,6 +40,13 @@ data class ProcessingState(
     val needsClarification: Boolean
         get() = result?.status == ResultStatus.NEEDS_CLARIFICATION
 
+    /**
+     * The pipeline delivered its terminal result but there was nothing to recommend (empty
+     * shortlist), so no Analysis was saved and there is no results screen to hand off to.
+     */
+    val finishedWithoutData: Boolean
+        get() = result != null && !needsClarification && analysisId == null
+
     val clarificationQuestions: List<String>
         get() = result?.questions?.takeIf { it.isNotEmpty() }
             ?: clarification?.questions.orEmpty()

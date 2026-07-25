@@ -10,6 +10,12 @@ import com.juanpablo0612.sickreshapex.data.repository.WebSocketAgentPipelineRepo
 import com.juanpablo0612.sickreshapex.domain.repository.AgentPipelineRepository
 import com.juanpablo0612.sickreshapex.domain.repository.AnalysisRepository
 import com.juanpablo0612.sickreshapex.domain.repository.SettingsRepository
+import com.juanpablo0612.sickreshapex.domain.usecase.GetAnalysisDetailsUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.GetFavoritesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.GetQuickExamplesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.GetRecentAnalysesUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.StartAnalysisUseCase
+import com.juanpablo0612.sickreshapex.domain.usecase.ToggleFavoriteUseCase
 import com.juanpablo0612.sickreshapex.ui.features.history.HistoryViewModel
 import com.juanpablo0612.sickreshapex.ui.features.home.HomeViewModel
 import com.juanpablo0612.sickreshapex.ui.features.processing.ProcessingViewModel
@@ -23,9 +29,17 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-/** `http(s)://host:port` from secrets.properties -> `ws(s)://host:port/ws/orchestrator`. */
+/**
+ * secrets.properties may hold `http(s)://host:port`, `ws(s)://host:port`, or the full
+ * `ws://host:port/ws/orchestrator` endpoint — normalize all of them to `scheme://host:port`.
+ */
+private fun backendBaseUrl(): String =
+    BuildConfig.BACKEND_BASE_URL.trim().trimEnd('/').removeSuffix("/ws/orchestrator")
+
+private fun httpBaseUrl(): String = backendBaseUrl().replaceFirst(Regex("^ws"), "http")
+
 private fun orchestratorWsUrl(): String =
-    BuildConfig.BACKEND_BASE_URL.trimEnd('/').replaceFirst("http", "ws") + "/ws/orchestrator"
+    backendBaseUrl().replaceFirst(Regex("^http"), "ws") + "/ws/orchestrator"
 
 val appModule = module {
     single<AnalysisRepository> { MockAnalysisRepository() }
@@ -41,7 +55,7 @@ val appModule = module {
     }
     single<OrchestratorApi> {
         Retrofit.Builder()
-            .baseUrl(BuildConfig.BACKEND_BASE_URL.trimEnd('/') + "/")
+            .baseUrl(httpBaseUrl() + "/")
             .client(get())
             .addConverterFactory(GsonConverterFactory.create(get<Gson>()))
             .build()
@@ -57,9 +71,16 @@ val appModule = module {
         )
     }
 
-    viewModel { HomeViewModel(get()) }
-    viewModel { RecommendationViewModel(get()) }
+    factory { GetRecentAnalysesUseCase(get()) }
+    factory { GetQuickExamplesUseCase(get()) }
+    factory { GetAnalysisDetailsUseCase(get()) }
+    factory { GetFavoritesUseCase(get()) }
+    factory { ToggleFavoriteUseCase(get()) }
+    factory { StartAnalysisUseCase(get()) }
+
+    viewModel { HomeViewModel(get(), get()) }
+    viewModel { RecommendationViewModel(get(), get(), get()) }
     viewModel { ProcessingViewModel(get()) }
-    viewModel { HistoryViewModel(get()) }
+    viewModel { HistoryViewModel(get(), get(), get()) }
     viewModel { SettingsViewModel(get(), get()) }
 }

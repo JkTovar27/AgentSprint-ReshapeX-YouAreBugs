@@ -63,6 +63,8 @@
     <string name="processing_pipeline_stopped">Pipeline stopped</string>
     <string name="processing_completed_ratio">%1$d/5</string>
     <string name="processing_pipeline_failed">Pipeline failed</string>
+    <string name="processing_no_results_pill">No results</string>
+    <string name="processing_no_results_reason">The pipeline finished but returned no recommendations. The backend completed every stage without producing sensor data — check the orchestrator logs for this session.</string>
     <string name="agent_intake">Intake</string>
     <string name="agent_clarification">Clarification</string>
     <string name="agent_retrieval">Retrieval</string>
