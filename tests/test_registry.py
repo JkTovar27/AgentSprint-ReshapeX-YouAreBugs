@@ -53,8 +53,9 @@ def test_schema_calcular_confianza_refleja_su_firma_real():
         "evaluaciones",
         "pesos",
         "umbral_escalar",
+        "top_n_evidencia",
     }
-    # pesos y umbral_escalar tienen default en la firma -> no son requeridos.
+    # pesos, umbral_escalar y top_n_evidencia tienen default -> no son requeridos.
     assert set(parametros["required"]) == {"requisitos", "evidencia", "evaluaciones"}
 
 

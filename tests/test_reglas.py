@@ -36,6 +36,9 @@ def test_viable_cuando_todo_esta_dentro_de_rango_y_soportado():
     assert any("distancia_mm" in r for r in resultado.razones)
     assert any("ambiente 'polvo'" in r for r in resultado.razones)
     assert any("material_superficie 'opaco'" in r for r in resultado.razones)
+    assert resultado.reglas_pasadas == 3
+    assert resultado.reglas_falladas == 0
+    assert resultado.reglas_no_evaluadas == 0
 
 
 def test_descartada_por_distancia_fuera_de_rango():
@@ -47,6 +50,9 @@ def test_descartada_por_distancia_fuera_de_rango():
     assert any(
         "distancia_mm" in r and "FUERA del rango" in r for r in resultado.razones
     )
+    assert resultado.reglas_pasadas == 2
+    assert resultado.reglas_falladas == 1
+    assert resultado.reglas_no_evaluadas == 0
 
 
 def test_descartada_por_ambiente_no_soportado():
@@ -58,6 +64,9 @@ def test_descartada_por_ambiente_no_soportado():
     assert any(
         "ambiente 'vibracion'" in r and "NO soportado" in r for r in resultado.razones
     )
+    assert resultado.reglas_pasadas == 2
+    assert resultado.reglas_falladas == 1
+    assert resultado.reglas_no_evaluadas == 0
 
 
 def test_descartada_por_material_no_soportado():
@@ -70,6 +79,9 @@ def test_descartada_por_material_no_soportado():
         "material_superficie 'metalico'" in r and "NO soportado" in r
         for r in resultado.razones
     )
+    assert resultado.reglas_pasadas == 2
+    assert resultado.reglas_falladas == 1
+    assert resultado.reglas_no_evaluadas == 0
 
 
 def test_ambigua_por_requisito_incompleto():
@@ -85,6 +97,9 @@ def test_ambigua_por_requisito_incompleto():
     assert resultado.veredicto == "ambigua"
     assert any("material_superficie" in r for r in resultado.reglas_no_evaluables)
     assert not any("NO soportado" in r for r in resultado.razones)
+    assert resultado.reglas_pasadas == 2
+    assert resultado.reglas_falladas == 0
+    assert resultado.reglas_no_evaluadas == 1
 
 
 def test_ambigua_por_spec_ausente_en_candidato():
@@ -98,6 +113,9 @@ def test_ambigua_por_spec_ausente_en_candidato():
         "material_superficie" in r and "no publica materiales_soportados" in r
         for r in resultado.reglas_no_evaluables
     )
+    assert resultado.reglas_pasadas == 2
+    assert resultado.reglas_falladas == 0
+    assert resultado.reglas_no_evaluadas == 1
 
 
 def test_fallo_con_no_evaluables_es_descartada_no_ambigua():
@@ -109,3 +127,6 @@ def test_fallo_con_no_evaluables_es_descartada_no_ambigua():
 
     assert resultado.veredicto == "descartada"
     assert resultado.reglas_no_evaluables != []
+    assert resultado.reglas_pasadas == 1
+    assert resultado.reglas_falladas == 1
+    assert resultado.reglas_no_evaluadas == 1

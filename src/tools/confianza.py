@@ -34,32 +34,52 @@ def calcular_confianza(
     evaluaciones: list[ResultadoEvaluacion],
     pesos: dict[str, float] | None = None,
     umbral_escalar: float = 0.6,
+    top_n_evidencia: int = 2,
 ) -> ResultadoConfianza:
     """Combina completitud, calidad de evidencia y certeza de reglas.
 
     - completitud = campos presentes / campos totales del schema de requisitos.
-    - calidad_evidencia = promedio de score en `evidencia`; 0.0 si está vacía.
-    - certeza_reglas = reglas evaluadas / (evaluadas + no_evaluables),
-      sumado sobre todas las `evaluaciones`; 0.0 si no hay ninguna regla.
+    - calidad_evidencia = promedio de score de los `top_n_evidencia` fragmentos
+      con mayor score en `evidencia` (todos si hay menos de `top_n_evidencia`);
+      0.0 si está vacía. Usar el top-N en vez del promedio total evita que
+      muchos fragmentos irrelevantes diluyan un fragmento muy relevante.
+    - certeza_reglas = reglas_evaluadas / total_reglas, sumado sobre todas las
+      `evaluaciones`, donde reglas_evaluadas = reglas_pasadas + reglas_falladas
+      y total_reglas = reglas_evaluadas + reglas_no_evaluadas (contando reglas,
+      no strings de razones — máximo 3 por evaluación: distancia, ambiente,
+      material); 0.0 si no hay ninguna regla.
 
     debe_escalar es True cuando confianza < umbral_escalar (estrictamente
     menor). En el límite exacto (confianza == umbral_escalar) NO se escala.
+
+    Lanza ValueError si algún peso es negativo o si la suma de pesos no es
+    positiva (evita dividir por cero o invertir el sentido de la confianza).
     """
     pesos = pesos or PESOS_POR_DEFECTO
+
+    if any(peso < 0 for peso in pesos.values()):
+        raise ValueError(f"los pesos no pueden ser negativos: {pesos}")
+
     peso_total = sum(pesos.values())
+    if peso_total <= 0:
+        raise ValueError(
+            f"la suma de los pesos debe ser mayor que cero, recibido: {peso_total}"
+        )
 
     total_campos = len(CAMPOS_REQUERIDOS)
     presentes = total_campos - len(requisitos.campos_faltantes)
     completitud = presentes / total_campos
 
     if evidencia:
-        calidad_evidencia = sum(item["score"] for item in evidencia) / len(evidencia)
+        top = sorted(evidencia, key=lambda item: item["score"], reverse=True)
+        top = top[:top_n_evidencia]
+        calidad_evidencia = sum(item["score"] for item in top) / len(top)
     else:
         calidad_evidencia = 0.0
 
-    evaluadas = sum(len(ev.razones) for ev in evaluaciones)
-    no_evaluables = sum(len(ev.reglas_no_evaluables) for ev in evaluaciones)
-    total_reglas = evaluadas + no_evaluables
+    evaluadas = sum(ev.reglas_pasadas + ev.reglas_falladas for ev in evaluaciones)
+    no_evaluadas = sum(ev.reglas_no_evaluadas for ev in evaluaciones)
+    total_reglas = evaluadas + no_evaluadas
     certeza_reglas = evaluadas / total_reglas if total_reglas else 0.0
 
     desglose = {
