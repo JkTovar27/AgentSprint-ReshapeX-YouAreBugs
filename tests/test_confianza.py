@@ -144,6 +144,31 @@ def test_calidad_evidencia_lista_vacia_es_cero():
     assert resultado.desglose["calidad_evidencia"] == 0.0
 
 
+def test_evidencia_sin_clave_score_cuenta_como_cero():
+    evidencia = [
+        {"fuente": "a.pdf", "texto": "..."},  # sin "score"
+        {"fuente": "b.pdf", "texto": "...", "score": 0.8},
+    ]
+
+    resultado = calcular_confianza(requisitos_completos(), evidencia, evaluaciones=[])
+
+    # top-2 por defecto: [0.8, 0.0] -> promedio 0.4
+    assert resultado.desglose["calidad_evidencia"] == pytest.approx(0.4)
+
+
+def test_scores_fuera_de_rango_se_recortan_a_0_1():
+    evidencia = [
+        {"fuente": "a.pdf", "texto": "...", "score": 5.0},
+        {"fuente": "b.pdf", "texto": "...", "score": -2.0},
+    ]
+
+    resultado = calcular_confianza(requisitos_completos(), evidencia, evaluaciones=[])
+
+    # ambos scores se recortan a [0, 1] antes de promediar: (1.0 + 0.0) / 2
+    assert resultado.desglose["calidad_evidencia"] == pytest.approx(0.5)
+    assert 0.0 <= resultado.confianza <= 1.0
+
+
 def test_peso_negativo_lanza_value_error():
     pesos = {"completitud": -0.5, "calidad_evidencia": 0.5, "certeza_reglas": 1.0}
 

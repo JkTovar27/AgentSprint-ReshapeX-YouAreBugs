@@ -50,6 +50,15 @@ def test_ambiente_valor_invalido_lanza_error():
         RequisitosSensor(ambiente=["humedad"])
 
 
+def test_ambiente_none_explicito_lanza_error():
+    # ambiente=None no se coerciona silenciosamente a lista vacía: el
+    # validador "antes" solo envuelve strings sueltos, y None no encaja en
+    # list[AmbienteCondicion] -> Pydantic falla fuerte (fail loud), no falla
+    # silencioso.
+    with pytest.raises(ValidationError):
+        RequisitosSensor(ambiente=None)
+
+
 def test_distancia_mm_no_positiva_lanza_error():
     with pytest.raises(ValidationError):
         RequisitosSensor(distancia_mm=0)

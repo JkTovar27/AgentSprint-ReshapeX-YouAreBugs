@@ -42,7 +42,10 @@ def calcular_confianza(
     - calidad_evidencia = promedio de score de los `top_n_evidencia` fragmentos
       con mayor score en `evidencia` (todos si hay menos de `top_n_evidencia`);
       0.0 si está vacía. Usar el top-N en vez del promedio total evita que
-      muchos fragmentos irrelevantes diluyan un fragmento muy relevante.
+      muchos fragmentos irrelevantes diluyan un fragmento muy relevante. Un
+      item sin clave "score" cuenta como 0.0, y cada score se recorta a
+      [0, 1] antes de promediar, para que un score fuera de rango (dato de
+      RAG corrupto) nunca empuje la confianza fuera de [0, 1].
     - certeza_reglas = reglas_evaluadas / total_reglas, sumado sobre todas las
       `evaluaciones`, donde reglas_evaluadas = reglas_pasadas + reglas_falladas
       y total_reglas = reglas_evaluadas + reglas_no_evaluadas (contando reglas,
@@ -71,9 +74,9 @@ def calcular_confianza(
     completitud = presentes / total_campos
 
     if evidencia:
-        top = sorted(evidencia, key=lambda item: item["score"], reverse=True)
-        top = top[:top_n_evidencia]
-        calidad_evidencia = sum(item["score"] for item in top) / len(top)
+        scores = [min(1.0, max(0.0, item.get("score", 0.0))) for item in evidencia]
+        top_scores = sorted(scores, reverse=True)[:top_n_evidencia]
+        calidad_evidencia = sum(top_scores) / len(top_scores)
     else:
         calidad_evidencia = 0.0
 
