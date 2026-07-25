@@ -13,14 +13,15 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "sick_manuals"
-LOCAL_MODEL = "all-MiniLM-L6-v2"
+LOCAL_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 OPENAI_MODEL = "text-embedding-3-small"
 BATCH_SIZE = 20
 MAX_DOC_BYTES = 15000  # ChromaDB Cloud free tier: ~16KB por documento
 
 
-def _make_id(source_url: str) -> str:
-    return hashlib.sha256(source_url.encode()).hexdigest()[:32]
+def _make_id(source_url: str, title: str = "") -> str:
+    key = (source_url or "") + "||" + (title or "unknown")
+    return hashlib.sha256(key.encode()).hexdigest()[:32]
 
 
 def load_json(path: str) -> list[dict]:
@@ -81,7 +82,7 @@ def ingest(
         logger.warning("No hay documentos con texto para insertar")
         return
 
-    ids = [_make_id(d["source_url"]) for d in docs]
+    ids = [_make_id(d.get("source_url", ""), d.get("title", "")) for d in docs]
     documents = []
     truncated = 0
     for d in docs:
@@ -98,8 +99,8 @@ def ingest(
             "title": d.get("title", ""),
             "model": d.get("model", ""),
             "date": d.get("date", ""),
-            "source_url": d.get("source_url", ""),
-            "pdf_url": d.get("pdf_url", "") or "",
+            "source_url": d.get("source_url") or d.get("title", ""),
+            "pdf_url": d.get("pdf_url") or "",
             "type": d.get("type", ""),
         }
         for d in docs
