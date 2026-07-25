@@ -468,5 +468,59 @@
     "pdf_url": "",
     "type": "company",
     "text": "SICK envisions networked production where systems control and optimize themselves autonomously. Cyber-physical production systems in smart factories will organize themselves using real-time information from sensors. SICK sensors make Industry 4.0 a reality, enabling dynamic and self-organized industry processes with data security as the key to success."
+  },
+  {
+    "title": "SICK Sensor Categories Overview — TCA Automation Guide",
+    "text": "SICK es una empresa líder en la fabricación de sensores inteligentes, reconocida por su capacidad para integrar tecnología avanzada en entornos industriales. Desde la detección de objetos hasta la monitorización de procesos, sus dispositivos garantizan un control eficiente y seguro en fábricas, cadenas de suministros y plantas de producción. Con un enfoque en la Industria 4.0, SICK facilita la digitalización industrial y la conexión inteligente de sistemas, contribuyendo significativamente a la optimización operativa. Las categorías principales de sensores SICK incluyen: sensores de detección, sensores de distancia, sensores de seguridad, sensores LiDAR y radar, procesamiento industrial de imágenes e identificación, sensores de control de movimiento, y sensores de proceso.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Detection Sensors (Sensores de Detección)",
+    "text": "Los sensores de detección de SICK son esenciales para identificar la presencia o ausencia de objetos en líneas de producción. Su tecnología permite detectar materiales, piezas o productos con una precisión sobresaliente, incluso en condiciones adversas como altas velocidades o baja iluminación. Ideales para automatización industrial donde se requiere verificar la presencia de componentes en cintas transportadoras o líneas de ensamblaje.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Distance Sensors (Sensores de Distancia)",
+    "text": "Los sensores de distancia de SICK utilizan métodos como el tiempo de vuelo (ToF) o triangulación láser para medir distancias con exactitud milimétrica. Son ideales para aplicaciones donde se requiere controlar espacios entre objetos o garantizar la alineación de componentes en procesos de ensamblaje. Permiten mediciones precisas en entornos industriales exigentes.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Safety Sensors (Sensores de Seguridad)",
+    "text": "El compromiso de SICK con la seguridad laboral se refleja en su gama de dispositivos diseñados para proteger a los trabajadores y prevenir accidentes. Entre ellos destacan las barreras fotoeléctricas, escáneres láser y controladores de seguridad, que monitorizan áreas críticas y actúan como barreras automáticas ante posibles riesgos. La tecnología de seguridad de SICK protege tanto a los trabajadores como a los equipos, disminuyendo riesgos laborales y tiempos de inactividad.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK LiDAR and Radar Sensors",
+    "text": "Los sensores LiDAR y radar de SICK son fundamentales para aplicaciones avanzadas como la navegación de vehículos autónomos o la supervisión de grandes áreas. Gracias a su capacidad de mapeo tridimensional, facilitan el control de entornos complejos, detectando con precisión objetos estáticos y en movimiento. Los sensores LiDAR destacan por generar mapas tridimensionales de alta precisión, ideales para navegación autónoma y monitoreo de grandes áreas.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Industrial Vision and Identification",
+    "text": "Las soluciones de visión artificial de SICK permiten la inspección visual automatizada, el reconocimiento de códigos y la identificación de etiquetas. Esto resulta clave en industrias como la logística, donde se requiere alta precisión en la clasificación y trazabilidad de productos. Incluye procesamiento industrial de imágenes y sistemas de identificación para trazabilidad y control de calidad.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Motion Control Sensors",
+    "text": "Los sensores de control de movimiento de SICK están diseñados para supervisar velocidades, posiciones y movimientos angulares. Son cruciales en maquinaria industrial de alta precisión. Ayudan a mantener el ritmo de producción y a evitar desajustes en equipos mecánicos, garantizando un funcionamiento sincronizado en líneas de producción automatizadas.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "SICK Process Sensors (Sensores de Proceso)",
+    "text": "Los sensores de proceso de SICK se emplean para monitorizar variables físicas como temperatura, presión, flujo y nivel. Su integración en líneas de producción garantiza un control constante y una respuesta rápida ante cualquier desviación de los parámetros establecidos. Esenciales para la instrumentación industrial y el control preciso de procesos de fabricación.",
+    "model": "",
+    "type": "company"
+  },
+  {
+    "title": "Benefits of SICK Sensors in Industrial Automation",
+    "text": "Beneficios de los sensores SICK en la automatización industrial: 1) Mayor Eficiencia: reducen errores y optimizan procesos gracias a su alta precisión y capacidad de adaptación. 2) Seguridad Mejorada: protegen tanto a trabajadores como a equipos, disminuyendo riesgos laborales. 3) Adaptabilidad: compatibilidad con estándares Industria 4.0 facilita integración en sistemas existentes. 4) Sostenibilidad: contribuyen a reducir desperdicio de materiales y optimizar uso de recursos. Los sensores SICK son aplicables en automoción, logística, alimentación y bebidas, manufactura y más.",
+    "model": "",
+    "type": "company"
   }
 ]
