@@ -115,7 +115,7 @@ class OrchestratorState(TypedDict):
     # ========== CANDIDATE EVALUATION ==========
     candidates: NotRequired[List[Dict[str, Any]]]
     """
-    List of candidate sensors after initial retrieval and basic matching.
+    List of candidate sensors after retrieval and structured extraction.
     
     Each candidate includes:
     - model: Sensor model name
@@ -124,40 +124,44 @@ class OrchestratorState(TypedDict):
     - precision: Accuracy specification
     - ip_rating: Protection level
     - datasheet_reference: ID or URL to source
-    - preliminary_score: Initial matching score
-    
-    Example:
-    ```python
-    [
-        {
-            "model": "SICK S300 Professional",
-            "type": "3D Time-of-Flight Camera",
-            "range": "0.3-8m",
-            "precision": "±50mm @ 8m",
-            "ip_rating": "IP67",
-            "datasheet_reference": "sick_s300_v2.1_2023",
-            "preliminary_score": 0.94
-        }
-    ]
-    ```
+    - retrieval_score: Relevance score from Chroma (0-1)
+    - rango_distancia_mm: [min, max] in mm for rule validation
+    - ambientes_soportados: list of supported environment conditions
+    - materiales_soportados: list of detectable materials
     """
 
     validation_results: NotRequired[Dict[str, Any]]
     """
-    Detailed validation results for each candidate against structured_requirements.
+    Detailed validation results from evaluar_familia() deterministic rules.
     
-    Example:
-    ```python
-    {
-        "SICK S300 Professional": {
-            "range_match": {"pass": True, "detail": "8m ≥ 10m required"},
-            "precision_match": {"pass": True, "detail": "±50mm < ±5cm required"},
-            "ip_rating_match": {"pass": True, "detail": "IP67 ≥ IP54 required"},
-            "environment_rating": {"pass": True, "detail": "Dusty environments supported"},
-            "overall_viability": True
-        }
-    }
-    ```
+    Each entry contains:
+    - criteria: dict with range_coverage, environment_fit, material_compatibility
+    - overall_viability: bool
+    - veredicto: "viable" | "descartada" | "ambigua"
+    - reglas_pasadas: int
+    - reglas_falladas: int
+    - reglas_no_evaluadas: int
+    - razones: list[str]
+    - no_evaluables: list[str]
+    """
+
+    evaluaciones: NotRequired[List[Dict[str, Any]]]
+    """
+    Compact evaluation results from validator, consumed by evaluator.
+    
+    Each entry:
+    - veredicto: str
+    - reglas_pasadas: int
+    - reglas_falladas: int
+    - reglas_no_evaluadas: int
+    """
+
+    confianza_desglose: NotRequired[Dict[str, float]]
+    """
+    Breakdown of confidence calculation from calcular_confianza().
+    
+    Keys: completitud, calidad_evidencia, certeza_reglas
+    Values: 0.0-1.0
     """
 
     # ========== CONFIDENCE & ROUTING ==========
