@@ -3,6 +3,7 @@ package com.juanpablo0612.sickreshapex.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -63,10 +64,13 @@ fun StaggeredAppearance(
         visible = visible,
         modifier = modifier,
         enter = fadeIn(tween(Motion.DURATION_MEDIUM, easing = Motion.Standard)) +
-            slideInVertically(
-                animationSpec = tween(Motion.DURATION_MEDIUM, easing = Motion.EmphasizedDecelerate),
-                initialOffsetY = { it / 4 }
-            )
+                slideInVertically(
+                    animationSpec = tween(
+                        Motion.DURATION_MEDIUM,
+                        easing = Motion.EmphasizedDecelerate
+                    ),
+                    initialOffsetY = { it / 4 }
+                )
     ) {
         content()
     }
@@ -83,7 +87,12 @@ fun ExpandableAppearance(
         visible = visible,
         modifier = modifier,
         enter = fadeIn(tween(Motion.DURATION_MEDIUM)) +
-            expandVertically(animationSpec = tween(Motion.DURATION_MEDIUM, easing = Motion.Emphasized)),
+                expandVertically(
+                    animationSpec = tween(
+                        Motion.DURATION_MEDIUM,
+                        easing = Motion.Emphasized
+                    )
+                ),
         exit = shrinkVertically(animationSpec = tween(Motion.DURATION_FAST))
     ) {
         content()

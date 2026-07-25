@@ -1,10 +1,8 @@
 package com.juanpablo0612.sickreshapex.ui.features.processing
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,18 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.TravelExplore
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,23 +33,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.juanpablo0612.sickreshapex.domain.model.AgentStage
-import com.juanpablo0612.sickreshapex.domain.model.EvaluatorOutput
-import com.juanpablo0612.sickreshapex.domain.model.NextStep
-import com.juanpablo0612.sickreshapex.domain.model.PlannerOutput
-import com.juanpablo0612.sickreshapex.domain.model.ResponderOutput
-import com.juanpablo0612.sickreshapex.domain.model.RetrieverOutput
-import com.juanpablo0612.sickreshapex.domain.model.StageStatus
-import com.juanpablo0612.sickreshapex.domain.model.ValidatorOutput
-import com.juanpablo0612.sickreshapex.ui.components.AnimatedGradientBackdrop
-import com.juanpablo0612.sickreshapex.ui.components.ConfidenceRing
-import com.juanpablo0612.sickreshapex.ui.components.ExpandableAppearance
-import com.juanpablo0612.sickreshapex.ui.components.PillTone
-import com.juanpablo0612.sickreshapex.ui.components.PulsingDot
-import com.juanpablo0612.sickreshapex.ui.components.RadarPulse
-import com.juanpablo0612.sickreshapex.ui.components.SecondaryActionButton
-import com.juanpablo0612.sickreshapex.ui.components.SickCard
-import com.juanpablo0612.sickreshapex.ui.components.StatusPill
+import com.juanpablo0612.sickreshapex.domain.model.*
+import com.juanpablo0612.sickreshapex.ui.components.*
 import com.juanpablo0612.sickreshapex.ui.theme.Motion
 import com.juanpablo0612.sickreshapex.ui.theme.ReadoutType
 import com.juanpablo0612.sickreshapex.ui.theme.extendedColors
@@ -148,7 +123,7 @@ fun ProcessingScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     visible = showCompletionBeat,
                     modifier = Modifier.fillMaxSize(),
                     enter = fadeIn(tween(Motion.DURATION_MEDIUM)),
@@ -182,7 +157,7 @@ private fun ProcessingHeader(
     ) {
         IconButton(onClick = onBack) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
                 tint = MaterialTheme.colorScheme.onBackground
             )
@@ -330,9 +305,9 @@ private fun stageDescription(stage: AgentStage): String = when (stage) {
 private fun stageIcon(stage: AgentStage): ImageVector = when (stage) {
     AgentStage.PLANNER -> Icons.Filled.Psychology
     AgentStage.RETRIEVER -> Icons.Filled.TravelExplore
-    AgentStage.VALIDATOR -> Icons.Filled.FactCheck
+    AgentStage.VALIDATOR -> Icons.AutoMirrored.Filled.FactCheck
     AgentStage.EVALUATOR -> Icons.Filled.Insights
-    AgentStage.RESPONDER -> Icons.Filled.Send
+    AgentStage.RESPONDER -> Icons.AutoMirrored.Filled.Send
 }
 
 @Composable
