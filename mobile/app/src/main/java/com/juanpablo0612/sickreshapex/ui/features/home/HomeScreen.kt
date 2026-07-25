@@ -9,11 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.juanpablo0612.sickreshapex.ui.components.LoadingIndicator
 import com.juanpablo0612.sickreshapex.ui.components.SectionHeader
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    viewModel: HomeViewModel = koinViewModel(),
     onStartAnalysis: (String) -> Unit,
     onNavigateToHistory: () -> Unit
 ) {

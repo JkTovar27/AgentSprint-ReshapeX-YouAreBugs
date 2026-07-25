@@ -12,11 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.juanpablo0612.sickreshapex.ui.components.LoadingIndicator
 import com.juanpablo0612.sickreshapex.ui.components.RequirementRow
 import com.juanpablo0612.sickreshapex.ui.components.SectionHeader
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecommendationScreen(
-    viewModel: RecommendationViewModel,
+    viewModel: RecommendationViewModel = koinViewModel(),
     analysisId: String?,
     initialDescription: String?,
     onBack: () -> Unit,
